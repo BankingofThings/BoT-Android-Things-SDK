@@ -1,0 +1,96 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        applicationId "io.bankingofthings.iot"
+        minSdkVersion 27
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
+    }
+    buildTypes {
+        release {
+            debuggable false
+            buildConfigField "String", "BUILD_DATE", '"19-02-2019"'
+            buildConfigField "String", "HOSTNAME", '"Sony Walkman"'
+            buildConfigField "String", "MAKER_ID", '"ff5e24b8-8082-4df6-9bf6-3476580d1cfc"'
+            buildConfigField "String", "BOT_HOST", '"bankingofthings.io"'
+            buildConfigField "String", "BASE_URL", '"https://api.bankingofthings.io/bot_iot/"'
+            buildConfigField "String", "DEVICE_NAME", '"My IoT device"'
+            buildConfigField "String", "BOT_FINGERPRINT", '"hXY/Hf/943keUs5Qd2t7UKFa4PBqgEgZ7Kl6sizjSbU="'
+            buildConfigField "boolean", "GENERATE_DEVICE_ID_EVERY_RUN", "false"
+            buildConfigField "boolean", "MULTI_PAIR", "false"
+            buildConfigField "String", "ALTERNATIVE_IDENTIFIER_DISPLAYNAME", '"License Plate"'
+        }
+        debug {
+            debuggable true
+            buildConfigField "String", "BUILD_DATE", '"19-02-2019"'
+            buildConfigField "String", "HOSTNAME", '"Sony Walkman"'
+            buildConfigField "String", "MAKER_ID", '"ff5e24b8-8082-4df6-9bf6-3476580d1cfc"'
+            buildConfigField "String", "BOT_HOST", '"bankingofthings.io"'
+            buildConfigField "String", "BASE_URL", '"https://api-dev.bankingofthings.io/bot_iot/"'
+            buildConfigField "String", "DEVICE_NAME", '"My IoT device"'
+            buildConfigField "String", "BOT_FINGERPRINT", '"hXY/Hf/943keUs5Qd2t7UKFa4PBqgEgZ7Kl6sizjSbU="'
+            buildConfigField "boolean", "GENERATE_DEVICE_ID_EVERY_RUN", "false"
+            buildConfigField "boolean", "MULTI_PAIR", "true"
+            buildConfigField "String", "ALTERNATIVE_IDENTIFIER_DISPLAYNAME", '"License Plate"'
+        }
+    }
+    dataBinding {
+        enabled = true
+    }
+    kapt {
+        javacOptions {
+            option("-Xmaxerrs", 500)
+        }
+    }
+    compileOptions {
+        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_1_8
+    }
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    testImplementation 'junit:junit:4.12'
+
+    compileOnly 'com.google.android.things:androidthings:+'
+    implementation 'com.google.android.things.contrib:driver-pwmservo:1.0'
+    implementation 'com.google.android.things.contrib:driver-button:1.0'
+
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'com.android.support:multidex:1.0.3'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    // Generating QR
+    implementation 'com.google.zxing:core:3.3.0'
+    // Rx
+    implementation 'io.reactivex.rxjava2:rxkotlin:2.2.0'
+    implementation 'io.reactivex.rxjava2:rxandroid:2.0.2'
+    // Retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.4.0'
+    implementation 'com.squareup.retrofit2:retrofit-converters:2.4.0'
+    implementation 'com.squareup.retrofit2:retrofit-adapters:2.4.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.4.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:3.10.0'
+
+    // JWT
+    api 'io.jsonwebtoken:jjwt-api:0.10.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.10.5'
+    runtimeOnly('io.jsonwebtoken:jjwt-orgjson:0.10.5') {
+        exclude group: 'org.json', module: 'json' //provided by Android natively
+    }
+}
