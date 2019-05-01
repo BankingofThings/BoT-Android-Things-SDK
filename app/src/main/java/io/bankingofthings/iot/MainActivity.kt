@@ -12,6 +12,7 @@ import io.bankingofthings.iot.callback.FinnStartCallback
 import io.bankingofthings.iot.databinding.ActivityMainBinding
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
+import retrofit2.adapter.rxjava2.HttpException
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -104,10 +105,24 @@ class MainActivity : Activity() {
             startEngineDisposable?.dispose()
             System.out.println("MainActivity:onKeyDown ${servo?.angle}")
 
-            finn.triggerAction("248DF988-B811-418B-83BF-F55F5B46EEAB")
-                .subscribe({
-                    System.out.println("MainActivity:onKeyDown triggered")
-                }, { it.printStackTrace() })
+            finn.triggerAction("248DF988-B811-418B-83BF-F55F5B46EEAB", "my license plate")
+                .subscribe(
+                    {
+                        System.out.println("MainActivity:onKeyDown triggered")
+                    }
+                    , {
+                        it.printStackTrace()
+
+                        when (it::class) {
+                            HttpException::class -> {
+                                if ((it as HttpException).code() == 400) {
+                                    System.out.println("MainActivity:onKeyDown trigger not active")
+                                }
+                            }
+                        }
+
+                    }
+                )
         }
 
         return super.onKeyDown(keyCode, event)

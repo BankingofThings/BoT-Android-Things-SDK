@@ -187,8 +187,8 @@ class Finn(private val context: Context) {
     /**
      * Trigger action at CORE
      */
-    fun triggerAction(actionID: String): Completable {
-        return triggerActionWorker.execute(actionID, idRepo.generateID())
+    fun triggerAction(actionID: String, alternativeID:String?): Completable {
+        return triggerActionWorker.execute(actionID, idRepo.generateID(), alternativeID)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
     }
