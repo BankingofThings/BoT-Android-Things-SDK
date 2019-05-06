@@ -22,7 +22,8 @@ android {
             buildConfigField "String", "MAKER_ID", '"ff5e24b8-8082-4df6-9bf6-3476580d1cfc"'
             buildConfigField "String", "BOT_HOST", '"bankingofthings.io"'
             buildConfigField "String", "BASE_URL", '"https://api.bankingofthings.io/bot_iot/"'
-            buildConfigField "String", "DEVICE_NAME", '"My IoT device"'
+            // max 8 characters
+            buildConfigField "String", "DEVICE_NAME", '"Things"'
             buildConfigField "String", "BOT_FINGERPRINT", '"hXY/Hf/943keUs5Qd2t7UKFa4PBqgEgZ7Kl6sizjSbU="'
             buildConfigField "boolean", "GENERATE_DEVICE_ID_EVERY_RUN", "false"
             buildConfigField "boolean", "MULTI_PAIR", "false"
@@ -35,9 +36,10 @@ android {
             buildConfigField "String", "MAKER_ID", '"ff5e24b8-8082-4df6-9bf6-3476580d1cfc"'
             buildConfigField "String", "BOT_HOST", '"bankingofthings.io"'
             buildConfigField "String", "BASE_URL", '"https://api-dev.bankingofthings.io/bot_iot/"'
-            buildConfigField "String", "DEVICE_NAME", '"My IoT device"'
+            // max 8 characters
+            buildConfigField "String", "DEVICE_NAME", '"Things"'
             buildConfigField "String", "BOT_FINGERPRINT", '"hXY/Hf/943keUs5Qd2t7UKFa4PBqgEgZ7Kl6sizjSbU="'
-            buildConfigField "boolean", "GENERATE_DEVICE_ID_EVERY_RUN", "false"
+            buildConfigField "boolean", "GENERATE_DEVICE_ID_EVERY_RUN", "true"
             buildConfigField "boolean", "MULTI_PAIR", "true"
             buildConfigField "String", "ALTERNATIVE_IDENTIFIER_DISPLAYNAME", '"License Plate"'
         }

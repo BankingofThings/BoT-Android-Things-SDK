@@ -93,13 +93,14 @@ class Finn(private val context: Context) {
      */
     fun destroy() {
         disposables.map { it.dispose() }
-        bluetoothManager.stop()
+        bluetoothManager.destroy()
     }
 
     /**
      * Start
      */
     fun start(callback: FinnStartCallback) {
+        System.out.println("Finn:start")
         Observable.interval(5, TimeUnit.SECONDS)
             .map {
                 System.out.println("Finn:alive $it")

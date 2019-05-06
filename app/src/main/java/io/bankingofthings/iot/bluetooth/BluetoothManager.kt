@@ -13,6 +13,8 @@ import io.bankingofthings.iot.BuildConfig
 import io.bankingofthings.iot.model.domain.BotDeviceModel
 import io.bankingofthings.iot.model.domain.DeviceModel
 import io.bankingofthings.iot.model.domain.NetworkModel
+import io.reactivex.Observable
+import java.util.concurrent.TimeUnit
 
 class BluetoothManager(
     private val context: Context,
@@ -32,12 +34,7 @@ class BluetoothManager(
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
             super.onStartSuccess(settingsInEffect)
 
-            System.out.println("BluetoothManager:onStartSuccess settingsInEffect?.isConnectable = ${settingsInEffect?.isConnectable}")
-            System.out.println("BluetoothManager:onStartSuccess settingsInEffect?.mode = ${settingsInEffect?.mode}")
-            System.out.println("BluetoothManager:onStartSuccess settingsInEffect?.txPowerLevel = ${settingsInEffect?.txPowerLevel}")
-            System.out.println("BluetoothManager:onStartSuccess settingsInEffect?.timeout = ${settingsInEffect?.timeout}")
-
-            createGattService()
+            System.out.println("BluetoothManager:onStartSuccess $settingsInEffect")
         }
 
         override fun onStartFailure(errorCode: Int) {
@@ -57,6 +54,19 @@ class BluetoothManager(
      * Initialize and start the bluetooth device
      */
     fun start() {
+        System.out.println("BluetoothManager:start")
+
+        Observable.interval(5, TimeUnit.SECONDS)
+            .map {
+                System.out.println("BluetoothManager:start ${nativeBluetoothManager.getConnectedDevices(BluetoothProfile.GATT_SERVER)}")
+            }
+            .subscribe({}, { it.printStackTrace() }, {})
+
+
+        createGattService()
+
+        nativeBluetoothManager.adapter.setName(BuildConfig.DEVICE_NAME)
+
         val settings = AdvertiseSettings.Builder()
             .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
             .setConnectable(true)
@@ -65,7 +75,7 @@ class BluetoothManager(
             .build()
 
         val data = AdvertiseData.Builder()
-            .setIncludeDeviceName(false)
+            .setIncludeDeviceName(true)
             .setIncludeTxPowerLevel(false)
             .addServiceUuid(ParcelUuid(UUID))
             .build()
@@ -77,13 +87,10 @@ class BluetoothManager(
         )
     }
 
-    /**
-     * Stop bluetooth device
-     */
-    fun stop() {
-        gattServer?.close()
-
+    fun destroy() {
+        System.out.println("BluetoothManager:destroy")
         nativeBluetoothManager.adapter.bluetoothLeAdvertiser.stopAdvertising(advertisingCallback)
+        gattServer?.close()
     }
 
     /**
@@ -108,9 +115,9 @@ class BluetoothManager(
 
                     when (newState) {
                         BluetoothProfile.STATE_CONNECTED -> System.out.println("BluetoothManager:onConnectionStateChange connected")
+                        BluetoothProfile.STATE_DISCONNECTED -> System.out.println("BluetoothManager:onConnectionStateChange disconnected")
                         BluetoothProfile.STATE_CONNECTING -> System.out.println("BluetoothManager:onConnectionStateChange connecting")
                         BluetoothProfile.STATE_DISCONNECTING -> System.out.println("BluetoothManager:onConnectionStateChange disconnecting")
-                        BluetoothProfile.STATE_DISCONNECTED -> System.out.println("BluetoothManager:onConnectionStateChange disconnected")
                     }
                 }
 
@@ -129,7 +136,7 @@ class BluetoothManager(
                     when (characteristic?.uuid) {
                         UUID_DEVICE -> {
                             val json = Gson().toJson(deviceModel)
-                            System.out.println("BluetoothManager:onCharacteristicReadRequest device json = ${json}")
+                            System.out.println("BluetoothManager:onCharacteristicReadRequest $requestId $offset device json = ${json}")
                             gattServer?.sendResponse(
                                 device,
                                 requestId,

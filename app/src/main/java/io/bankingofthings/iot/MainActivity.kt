@@ -3,18 +3,8 @@ package io.bankingofthings.iot
 import android.app.Activity
 import android.databinding.DataBindingUtil
 import android.os.Bundle
-import android.view.KeyEvent
-import com.google.android.things.contrib.driver.button.Button
-import com.google.android.things.contrib.driver.button.ButtonInputDriver
-import com.google.android.things.contrib.driver.pwmservo.Servo
-import com.google.android.things.pio.PeripheralManager
 import io.bankingofthings.iot.callback.FinnStartCallback
 import io.bankingofthings.iot.databinding.ActivityMainBinding
-import io.reactivex.Observable
-import io.reactivex.disposables.Disposable
-import retrofit2.adapter.rxjava2.HttpException
-import java.io.IOException
-import java.util.concurrent.TimeUnit
 
 
 /**
@@ -49,7 +39,6 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-
 
         startFinn()
     }
