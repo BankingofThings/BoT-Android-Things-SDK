@@ -229,6 +229,9 @@ class BluetoothManager(
 
                             System.out.println("BluetoothManager:onCharacteristicWriteRequest pojo = ${pojo}")
                             callback.onWifiCredentialsChanged(pojo)
+
+                            // Clear after characteristic received
+                            wifiWriteString = ""
                         } catch (e: JsonSyntaxException) {
                             // ignore
                         }
