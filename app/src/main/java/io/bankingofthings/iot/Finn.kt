@@ -16,6 +16,7 @@ import io.bankingofthings.iot.interactors.TriggerActionWorker
 import io.bankingofthings.iot.model.domain.ActionModel
 import io.bankingofthings.iot.network.ApiHelper
 import io.bankingofthings.iot.network.SSLManager
+import io.bankingofthings.iot.network.pojo.BotDeviceSsidPojo
 import io.bankingofthings.iot.repo.DeviceRepo
 import io.bankingofthings.iot.repo.IdRepo
 import io.bankingofthings.iot.repo.KeyRepo
@@ -29,6 +30,11 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import android.content.Context.WIFI_SERVICE
+import android.net.wifi.WifiManager
+import android.net.wifi.WifiConfiguration
+import java.net.UnknownHostException
+
 
 /**
  * Finn is created when application is started and can be used as a Singleton
@@ -84,8 +90,47 @@ class Finn(private val context: Context) {
             context.getSystemService(Context.BLUETOOTH_SERVICE) as android.bluetooth.BluetoothManager,
             deviceRepo.deviceModel,
             deviceRepo.botDeviceModel,
-            deviceRepo.networkModel
+            deviceRepo.networkModel,
+            object : BluetoothManager.Callback {
+                override fun onWifiCredentialsChanged(pojo: BotDeviceSsidPojo) {
+                    changeWifiCredentials(pojo)
+                }
+            }
         )
+    }
+
+    /**
+     * Adds network and connect to it
+     */
+    private fun changeWifiCredentials(pojo: BotDeviceSsidPojo) {
+        System.out.println("Finn:changeWifiCredentials")
+        (context.getSystemService(WIFI_SERVICE) as WifiManager).apply {
+            System.out.println("Finn:changeWifiCredentials 1")
+            // Remove all SSIDs
+            configuredNetworks.forEach {
+                System.out.println("Finn:changeWifiCredentials it.SSID = ${it.SSID}")
+            }
+
+            val netID = addNetwork(
+                WifiConfiguration().apply {
+                    System.out.println("Finn:changeWifiCredentials 2")
+                    SSID = String.format("\"%s\"", pojo.ssid)
+                    preSharedKey = String.format("\"%s\"", pojo.password)
+                }
+            )
+
+            if (netID != -1) {
+                System.out.println("Finn:changeWifiCredentials 3")
+                disconnect()
+                System.out.println("Finn:changeWifiCredentials 4")
+                enableNetwork(netID, true)
+                System.out.println("Finn:changeWifiCredentials 5")
+                reconnect()
+                System.out.println("Finn:changeWifiCredentials done")
+            } else {
+                System.out.println("Finn:changeWifiCredentials $netID network is invalid")
+            }
+        }
     }
 
     /**
@@ -137,7 +182,14 @@ class Finn(private val context: Context) {
                         callback.onDevicePaired()
                     }
                 },
-                { it.printStackTrace() }
+                {
+                    // Can happen when changing network SSID
+                    it.printStackTrace()
+                    when (it) {
+                        UnknownHostException::class -> checkDeviceIsAlreadyPaired(callback)
+                        else -> checkDeviceIsAlreadyPaired(callback)
+                    }
+                }
             )
             .apply { disposables.add(this) }
     }
@@ -164,15 +216,22 @@ class Finn(private val context: Context) {
             }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                System.out.println("Finn:startIsPairedCheck $it")
+            .subscribe(
+                {
+                    System.out.println("Finn:startIsPairedCheck $it")
 
-                if (it) {
-                    System.out.println("Finn:startIsPairedCheck kill")
-                    disposable?.dispose()
-                    callback.onDevicePaired()
+                    if (it) {
+                        System.out.println("Finn:startIsPairedCheck kill")
+                        disposable?.dispose()
+                        callback.onDevicePaired()
+                    }
+                },
+                {
+                    it.printStackTrace()
+
+                    startIsPairedCheck((callback))
                 }
-            }, { it.printStackTrace() })
+            )
             .apply { disposable = this }
     }
 
@@ -188,7 +247,7 @@ class Finn(private val context: Context) {
     /**
      * Trigger action at CORE
      */
-    fun triggerAction(actionID: String, alternativeID:String?): Completable {
+    fun triggerAction(actionID: String, alternativeID: String?): Completable {
         return triggerActionWorker.execute(actionID, idRepo.generateID(), alternativeID)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
