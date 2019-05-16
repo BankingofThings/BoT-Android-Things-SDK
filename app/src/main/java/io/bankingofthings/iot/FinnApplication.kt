@@ -15,15 +15,11 @@ class FinnApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        System.out.println("FinnApplication:onCreate")
-
         finn = Finn(this)
     }
 
     override fun onTerminate() {
         super.onTerminate()
-
-        System.out.println("FinnApplication:onTerminate")
 
         finn.destroy()
     }

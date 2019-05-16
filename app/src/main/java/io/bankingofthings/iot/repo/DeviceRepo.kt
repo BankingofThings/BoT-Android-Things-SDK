@@ -24,12 +24,17 @@ class DeviceRepo(private val context: Context, private val keyRepo: KeyRepo, pri
     }
 
     /**
-     * Model containing WiFi SSID and ip address
+     * Business level model
      */
-    private fun createNetworkModel(): NetworkModel {
-        return (context.getSystemService(Context.WIFI_SERVICE) as WifiManager).connectionInfo.let {
-            NetworkModel(it.ssid, Formatter.formatIpAddress(it.ipAddress))
-        }
+    private fun createDeviceModel(): DeviceModel {
+        return DeviceModel(
+            idRepo.makerID,
+            idRepo.deviceID,
+            Base64.encodeToString(keyRepo.publicKey.encoded, Base64.NO_WRAP),
+            BuildConfig.DEVICE_NAME,
+            if (BuildConfig.MULTI_PAIR) 1 else 0,
+            BuildConfig.ALTERNATIVE_IDENTIFIER_DISPLAYNAME
+        )
     }
 
     /**
@@ -55,16 +60,11 @@ class DeviceRepo(private val context: Context, private val keyRepo: KeyRepo, pri
     }
 
     /**
-     * Business level model
+     * Model containing WiFi SSID and ip address
      */
-    private fun createDeviceModel(): DeviceModel {
-        return DeviceModel(
-            idRepo.makerID,
-            idRepo.deviceID,
-            Base64.encodeToString(keyRepo.publicKey.encoded, Base64.NO_WRAP),
-            BuildConfig.DEVICE_NAME,
-            if (BuildConfig.MULTI_PAIR) 1 else 0,
-            BuildConfig.ALTERNATIVE_IDENTIFIER_DISPLAYNAME
-        )
+    private fun createNetworkModel(): NetworkModel {
+        return (context.getSystemService(Context.WIFI_SERVICE) as WifiManager).connectionInfo.let {
+            NetworkModel(it.ssid, Formatter.formatIpAddress(it.ipAddress))
+        }
     }
 }

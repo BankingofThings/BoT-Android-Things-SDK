@@ -3,9 +3,6 @@ package io.bankingofthings.iot
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
-import com.google.android.things.contrib.driver.pwmservo.Servo
-import com.google.android.things.pio.PeripheralManager
-import com.google.android.things.pio.Pwm
 import com.google.gson.Gson
 import io.bankingofthings.iot.bluetooth.BluetoothManager
 import io.bankingofthings.iot.callback.FinnStartCallback
@@ -28,7 +25,6 @@ import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 import android.content.Context.WIFI_SERVICE
 import android.net.wifi.WifiManager
@@ -67,6 +63,8 @@ class Finn(private val context: Context) {
 
     private val bluetoothManager: BluetoothManager
 
+    private lateinit var callback: FinnStartCallback
+
     init {
         instance = this
 
@@ -103,30 +101,18 @@ class Finn(private val context: Context) {
      * Adds network and connect to it
      */
     private fun changeWifiCredentials(pojo: BotDeviceSsidPojo) {
-        System.out.println("Finn:changeWifiCredentials")
         (context.getSystemService(WIFI_SERVICE) as WifiManager).apply {
-            System.out.println("Finn:changeWifiCredentials 1")
-            // Remove all SSIDs
-            configuredNetworks.forEach {
-                System.out.println("Finn:changeWifiCredentials it.SSID = ${it.SSID}")
-            }
-
             val netID = addNetwork(
                 WifiConfiguration().apply {
-                    System.out.println("Finn:changeWifiCredentials 2")
                     SSID = String.format("\"%s\"", pojo.ssid)
                     preSharedKey = String.format("\"%s\"", pojo.password)
                 }
             )
 
             if (netID != -1) {
-                System.out.println("Finn:changeWifiCredentials 3")
                 disconnect()
-                System.out.println("Finn:changeWifiCredentials 4")
                 enableNetwork(netID, true)
-                System.out.println("Finn:changeWifiCredentials 5")
                 reconnect()
-                System.out.println("Finn:changeWifiCredentials done")
             } else {
                 System.out.println("Finn:changeWifiCredentials $netID network is invalid")
             }
@@ -138,29 +124,24 @@ class Finn(private val context: Context) {
      */
     fun destroy() {
         disposables.map { it.dispose() }
-        bluetoothManager.destroy()
+        bluetoothManager.kill()
     }
 
     /**
      * Start
      */
     fun start(callback: FinnStartCallback) {
-        System.out.println("Finn:start")
-        Observable.interval(5, TimeUnit.SECONDS)
-            .map {
-                System.out.println("Finn:alive $it")
-            }
-            .subscribe()
+        this.callback = callback
 
         bluetoothManager.start()
 
-        checkDeviceIsAlreadyPaired(callback)
+        checkDeviceIsAlreadyPaired()
     }
 
     /**
      * When device is already paired and device is restarted. If not paired, start interval check.
      */
-    private fun checkDeviceIsAlreadyPaired(callback: FinnStartCallback) {
+    private fun checkDeviceIsAlreadyPaired() {
         checkDevicePairedWorker.execute()
             .flatMap {
                 // Paired ? Activated else start interval pair check
@@ -174,20 +155,18 @@ class Finn(private val context: Context) {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 {
-                    System.out.println("Finn:checkDeviceIsAlreadyPaired it = ${it}")
-
                     if (!it) {
-                        startIsPairedCheck(callback)
+                        startIsPairedCheck()
                     } else {
-                        callback.onDevicePaired()
+                        onDevicePaired()
                     }
                 },
                 {
                     // Can happen when changing network SSID
                     it.printStackTrace()
                     when (it) {
-                        UnknownHostException::class -> checkDeviceIsAlreadyPaired(callback)
-                        else -> checkDeviceIsAlreadyPaired(callback)
+                        UnknownHostException::class -> checkDeviceIsAlreadyPaired()
+                        else -> checkDeviceIsAlreadyPaired()
                     }
                 }
             )
@@ -197,15 +176,13 @@ class Finn(private val context: Context) {
     /**
      * Check with intervals, if device is paired. Stops when an user pairs the device.
      */
-    private fun startIsPairedCheck(callback: FinnStartCallback) {
+    private fun startIsPairedCheck() {
         var disposable: Disposable? = null
 
         Observable.interval(10, TimeUnit.SECONDS)
             .flatMapSingle {
                 checkDevicePairedWorker.execute()
                     .flatMap {
-                        System.out.println("Finn:startIsPairedCheck it = ${it}")
-
                         // Paired ? Activated else start interval pair check
                         if (it) {
                             activateDeviceWorker.execute()
@@ -218,21 +195,30 @@ class Finn(private val context: Context) {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 {
-                    System.out.println("Finn:startIsPairedCheck $it")
-
                     if (it) {
-                        System.out.println("Finn:startIsPairedCheck kill")
                         disposable?.dispose()
-                        callback.onDevicePaired()
+                        onDevicePaired()
                     }
                 },
                 {
                     it.printStackTrace()
 
-                    startIsPairedCheck((callback))
+                    startIsPairedCheck()
                 }
             )
             .apply { disposable = this }
+    }
+
+    /**
+     * When devices is by client paired
+     * If device can only be paired with 1 user (NOT multipair), then stop advertising
+     */
+    private fun onDevicePaired() {
+        if (!BuildConfig.MULTI_PAIR) {
+            bluetoothManager.kill()
+        }
+
+        callback.onDevicePaired()
     }
 
     /**
@@ -247,7 +233,7 @@ class Finn(private val context: Context) {
     /**
      * Trigger action at CORE
      */
-    fun triggerAction(actionID: String, alternativeID: String?): Completable {
+    fun triggerAction(actionID: String, alternativeID: String? = null): Completable {
         return triggerActionWorker.execute(actionID, idRepo.generateID(), alternativeID)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())

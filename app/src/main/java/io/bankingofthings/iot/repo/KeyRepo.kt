@@ -1,70 +1,56 @@
 package io.bankingofthings.iot.repo
 
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 import android.util.Base64
 import io.bankingofthings.iot.storage.SpHelper
-import java.security.KeyFactory
-import java.security.KeyPairGenerator
-import java.security.SecureRandom
+import java.security.*
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.RSAKeyGenParameterSpec
 import java.security.spec.X509EncodedKeySpec
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
 
 class KeyRepo(
     private val spHelper: SpHelper
 ) {
-    var publicKey: RSAPublicKey
-    var privateKey: RSAPrivateKey
-    val serverPublicKey: RSAPublicKey
+    var publicKey: PublicKey
+    var privateKey: PrivateKey
+    val serverPublicKey: PublicKey
 
     init {
-        if (!spHelper.getHasKeyPair()) {
-            System.out.println("KeyRepo: create new keys")
+        if (!spHelper.getHasKeyPair() || true) {
 
-            val gen = KeyPairGenerator.getInstance("RSA")
-            gen.initialize(1024, SecureRandom())
-            val keyPair = gen.genKeyPair()
+            val keyGen = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore")
 
-            publicKey = keyPair.public as RSAPublicKey
-            privateKey = keyPair.private as RSAPrivateKey
+            val keyGenParSpec = KeyGenParameterSpec
+                .Builder(
+                    "jwt",
+                    KeyProperties.PURPOSE_SIGN
+                )
+                .setDigests(KeyProperties.DIGEST_SHA256)
+                .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+                .setKeySize(1024)
+                .build()
 
-            spHelper.storePubicKey(Base64.encodeToString(publicKey.encoded, Base64.DEFAULT))
-            spHelper.storePrivateKey(Base64.encodeToString(privateKey.encoded, Base64.DEFAULT))
+            keyGen.initialize(keyGenParSpec)
+            keyGen.generateKeyPair()
+
             spHelper.setHasKeyPair(true)
-        } else {
-            publicKey = KeyFactory
-                .getInstance("RSA")
-                .generatePublic(
-                    X509EncodedKeySpec(
-                        Base64.decode(
-                            spHelper.getPublicKey(),
-                            Base64.DEFAULT
-                        )
-                    )
-                ) as RSAPublicKey
-
-            privateKey = KeyFactory
-                .getInstance("RSA")
-                .generatePrivate(
-                    PKCS8EncodedKeySpec(
-                        Base64.decode(
-                            spHelper.getPrivateKey(),
-                            Base64.DEFAULT
-                        )
-                    )
-                ) as RSAPrivateKey
-
-            val public = Base64.encodeToString(publicKey.encoded, Base64.DEFAULT)
-            val private = Base64.encodeToString(privateKey.encoded, Base64.DEFAULT)
-
-            System.out.println("KeyRepo: public = ${public}")
-            System.out.println("KeyRepo: private = ${private}")
         }
+
+        val keyStore = KeyStore.getInstance("AndroidKeyStore")
+        keyStore.load(null)
+
+        privateKey = (keyStore.getEntry("jwt", null) as KeyStore.PrivateKeyEntry).privateKey
+        publicKey = (keyStore.getEntry("jwt", null) as KeyStore.PrivateKeyEntry).certificate.publicKey
 
         serverPublicKey = getServerRSAPublicKey()
     }
 
-    private fun getServerRSAPublicKey(): RSAPublicKey {
+    private fun getServerRSAPublicKey(): PublicKey {
         val key: String = "MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA77WbE+3tVs14y0I+LeEx\n" +
                 "NJ2qB0OlKBu33lfFbYMUMPi6T+3/M83A2C/alDDRO2NHPvzK6xGvYa2U/NpdNsyg\n" +
                 "gA92BXK64mBhUc9SBbVAhMX5WKOs0daJ7OhBqOrHKHVy4Enhlk1uSL3zONQ0mBlh\n" +
@@ -80,6 +66,6 @@ class KeyRepo(
 
         return KeyFactory
             .getInstance("RSA")
-            .generatePublic(X509EncodedKeySpec(Base64.decode(key, Base64.DEFAULT))) as RSAPublicKey
+            .generatePublic(X509EncodedKeySpec(Base64.decode(key, Base64.DEFAULT)))
     }
 }

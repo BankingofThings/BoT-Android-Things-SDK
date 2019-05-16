@@ -43,7 +43,7 @@ class ApiHelper(private val sslManager: SSLManager) {
             .hostnameVerifier(sslManager::verifyHostName)
             .addInterceptor(
                 HttpLoggingInterceptor().apply {
-                    this.level = HttpLoggingInterceptor.Level.NONE
+                    this.level = HttpLoggingInterceptor.Level.BODY
                 }
             )
             .addInterceptor {

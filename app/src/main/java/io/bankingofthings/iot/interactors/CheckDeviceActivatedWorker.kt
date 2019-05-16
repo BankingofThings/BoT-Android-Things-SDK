@@ -34,11 +34,6 @@ class CheckDeviceActivatedWorker(
             }
             .map { it.get("bot", String::class.java) }
             .map { JSONObject(it) }
-            .map {
-                it.optBoolean("status", false)
-                    .apply {
-                        System.out.println("CheckDevicePairedWorker:execute $this")
-                    }
-            }
+            .map { it.optBoolean("status", false) }
     }
 }

@@ -26,7 +26,6 @@ class ActivateDeviceWorker(private val apiHelper: ApiHelper, private val keyRepo
             }
             .map { it.get("bot", String::class.java) }
             .flatMap {
-                System.out.println("ActivateDeviceWorker:execute it = '${it}'")
                 if (it.isEmpty()) {
                     Single.just(true)
                 } else {

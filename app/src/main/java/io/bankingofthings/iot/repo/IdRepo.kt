@@ -13,13 +13,10 @@ class IdRepo(spHelper: SpHelper) {
         if (!spHelper.getHasDeviceID() || BuildConfig.GENERATE_DEVICE_ID_EVERY_RUN) {
             deviceID = generateID()
 
-            System.out.println("IdRepo: creating new DeviceID $deviceID")
-
             spHelper.storeDeviceID(deviceID)
             spHelper.setHasDeviceID(true)
         } else {
             deviceID = spHelper.getDeviceID()
-            System.out.println("IdRepo: using existing DeviceID $deviceID")
         }
     }
 

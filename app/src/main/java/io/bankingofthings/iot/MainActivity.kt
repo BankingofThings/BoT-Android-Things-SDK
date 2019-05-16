@@ -5,6 +5,13 @@ import android.databinding.DataBindingUtil
 import android.os.Bundle
 import io.bankingofthings.iot.callback.FinnStartCallback
 import io.bankingofthings.iot.databinding.ActivityMainBinding
+import io.reactivex.Completable
+import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.concurrent.TimeUnit
 
 
 /**
@@ -55,11 +62,44 @@ class MainActivity : Activity() {
              * When user has paired the device with QR, Bluetooth or NFC
              */
             override fun onDevicePaired() {
-                System.out.println("MainActivity:onDevicePaired device ready to trigger actions")
+                Observable.interval(10, TimeUnit.SECONDS)
+                    .subscribe(
+                        {
+                            System.out.println("MainActivity:onDevicePaired")
+
+                            finn.triggerAction("43260E5C-C0A4-452C-8D03-38420AA9244C", "ercan3")
+                                .subscribe(
+                                    { System.out.println("MainActivity:onDevicePaired triggered") },
+                                    { it.printStackTrace() }
+                                )
+                        }
+                    )
             }
         })
 
         binding.qrHolder.setImageBitmap(finn.qrBitmap)
+
+//        Completable
+//            .fromAction {
+//                val conn = URL("http://go.com").openConnection()
+//                conn.connect()
+//
+//                val inputStream = conn.getInputStream()
+//
+//                val result = String(inputStream.readBytes())
+//
+//                System.out.println("MainActivity:startFinn result = ${result}")
+//            }
+//            .observeOn(AndroidSchedulers.mainThread())
+//            .subscribeOn(Schedulers.io())
+//            .subscribe(
+//                {
+//                    System.out.println("MainActivity:startFinn 123")
+//                },
+//                {
+//                    it.printStackTrace()
+//                }
+//            )
     }
 
     /**

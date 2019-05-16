@@ -42,8 +42,6 @@ class BluetoothManager(
     private val advertisingCallback = object : AdvertiseCallback() {
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
             super.onStartSuccess(settingsInEffect)
-
-            System.out.println("BluetoothManager:onStartSuccess $settingsInEffect")
         }
 
         override fun onStartFailure(errorCode: Int) {
@@ -70,7 +68,6 @@ class BluetoothManager(
     }
 
     private fun startAdvertising() {
-        System.out.println("BluetoothManager:startAdvertising")
         nativeBluetoothManager.adapter.setName(BuildConfig.DEVICE_NAME)
 
         val settings = AdvertiseSettings.Builder()
@@ -94,12 +91,10 @@ class BluetoothManager(
     }
 
     private fun stopAdvertising() {
-        System.out.println("BluetoothManager:stopAdvertising")
         nativeBluetoothManager.adapter.bluetoothLeAdvertiser.stopAdvertising(advertisingCallback)
     }
 
-    fun destroy() {
-        System.out.println("BluetoothManager:destroy")
+    fun kill() {
         stopAdvertising()
         gattServer?.close()
     }
@@ -116,7 +111,6 @@ class BluetoothManager(
                  */
                 override fun onConnectionStateChange(device: BluetoothDevice?, status: Int, newState: Int) {
                     super.onConnectionStateChange(device, status, newState)
-                    System.out.println("BluetoothManager:onConnectionStateChange $device")
 
                     if (status == BluetoothGatt.GATT_SUCCESS) {
                         System.out.println("BluetoothManager:onConnectionStateChange status success")
@@ -148,8 +142,6 @@ class BluetoothManager(
                     characteristic: BluetoothGattCharacteristic?
                 ) {
                     super.onCharacteristicReadRequest(device, requestId, offset, characteristic)
-
-                    System.out.println("BluetoothManager:onCharacteristicReadRequest characteristic?.uuid = ${characteristic?.uuid}")
 
                     when (characteristic?.uuid) {
                         UUID_DEVICE -> {
@@ -210,8 +202,6 @@ class BluetoothManager(
                         value
                     )
 
-                    System.out.println("BluetoothManager:onCharacteristicWriteRequest")
-
                     if (characteristic?.uuid == UUID_DEVICE_WIFI) {
                         value?.let {
                             wifiWriteString += String(it)
@@ -222,12 +212,9 @@ class BluetoothManager(
                         try {
                             val pojo = Gson().fromJson(wifiWriteString, BotDeviceSsidPojo::class.java)
 
-                            System.out.println("BluetoothManager:onCharacteristicWriteRequest")
-
                             characteristic?.setValue(wifiWriteString)
                             gattServer?.notifyCharacteristicChanged(device, characteristic, false)
 
-                            System.out.println("BluetoothManager:onCharacteristicWriteRequest pojo = ${pojo}")
                             callback.onWifiCredentialsChanged(pojo)
 
                             // Clear after characteristic received
