@@ -13,30 +13,31 @@ import java.security.spec.X509EncodedKeySpec
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 
-class KeyRepo(
-    private val spHelper: SpHelper
-) {
+class KeyRepo(spHelper: SpHelper) {
     var publicKey: PublicKey
     var privateKey: PrivateKey
     val serverPublicKey: PublicKey
 
     init {
-        if (!spHelper.getHasKeyPair() || true) {
+        if (!spHelper.getHasKeyPair()) {
+            System.out.println("KeyRepo: new RSA generated")
 
-            val keyGen = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore")
+            KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore")
+                .apply {
+                    initialize(
+                        KeyGenParameterSpec
+                            .Builder(
+                                "jwt",
+                                KeyProperties.PURPOSE_SIGN
+                            )
+                            .setDigests(KeyProperties.DIGEST_SHA256)
+                            .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+                            .setKeySize(1024)
+                            .build()
+                    )
 
-            val keyGenParSpec = KeyGenParameterSpec
-                .Builder(
-                    "jwt",
-                    KeyProperties.PURPOSE_SIGN
-                )
-                .setDigests(KeyProperties.DIGEST_SHA256)
-                .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
-                .setKeySize(1024)
-                .build()
-
-            keyGen.initialize(keyGenParSpec)
-            keyGen.generateKeyPair()
+                    generateKeyPair()
+                }
 
             spHelper.setHasKeyPair(true)
         }

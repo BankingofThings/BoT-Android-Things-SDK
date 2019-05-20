@@ -62,16 +62,25 @@ class MainActivity : Activity() {
              * When user has paired the device with QR, Bluetooth or NFC
              */
             override fun onDevicePaired() {
+                System.out.println("MainActivity:onDevicePaired")
+
                 Observable.interval(10, TimeUnit.SECONDS)
                     .subscribe(
                         {
-                            System.out.println("MainActivity:onDevicePaired")
+                            System.out.println("MainActivity:onDevicePaired interval")
 
-                            finn.triggerAction("43260E5C-C0A4-452C-8D03-38420AA9244C", "ercan3")
+                            finn.triggerAction("B6D56D4D-F559-4E14-911C-22111C68D16B")
                                 .subscribe(
                                     { System.out.println("MainActivity:onDevicePaired triggered") },
                                     { it.printStackTrace() }
                                 )
+                        },
+                        {
+                            System.out.println("MainActivity:onDevicePaired error")
+                            it.printStackTrace()
+                        },
+                        {
+                            System.out.println("MainActivity:onDevicePaired completed")
                         }
                     )
             }

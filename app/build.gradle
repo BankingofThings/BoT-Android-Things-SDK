@@ -40,9 +40,9 @@ android {
             // max 8 characters
             buildConfigField "String", "DEVICE_NAME", '"Things"'
             buildConfigField "String", "BOT_FINGERPRINT", '"hXY/Hf/943keUs5Qd2t7UKFa4PBqgEgZ7Kl6sizjSbU="'
-            buildConfigField "boolean", "GENERATE_DEVICE_ID_EVERY_RUN", "true"
+            buildConfigField "boolean", "GENERATE_DEVICE_ID_EVERY_RUN", "false"
             buildConfigField "boolean", "HAS_WIFI", "false"
-            buildConfigField "boolean", "MULTI_PAIR", "true"
+            buildConfigField "boolean", "MULTI_PAIR", "false"
             buildConfigField "String", "ALTERNATIVE_IDENTIFIER_DISPLAYNAME", '"License Plate"'
         }
     }

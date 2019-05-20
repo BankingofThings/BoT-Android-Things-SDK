@@ -2,14 +2,15 @@ package io.bankingofthings.iot
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Context.WIFI_SERVICE
 import android.graphics.Bitmap
+import android.net.wifi.WifiConfiguration
+import android.net.wifi.WifiManager
 import com.google.gson.Gson
 import io.bankingofthings.iot.bluetooth.BluetoothManager
 import io.bankingofthings.iot.callback.FinnStartCallback
-import io.bankingofthings.iot.interactors.ActivateDeviceWorker
-import io.bankingofthings.iot.interactors.CheckDevicePairedWorker
-import io.bankingofthings.iot.interactors.GetActionsWorker
-import io.bankingofthings.iot.interactors.TriggerActionWorker
+import io.bankingofthings.iot.error.ActionFrequencyTimeNotPassed
+import io.bankingofthings.iot.interactors.*
 import io.bankingofthings.iot.model.domain.ActionModel
 import io.bankingofthings.iot.network.ApiHelper
 import io.bankingofthings.iot.network.SSLManager
@@ -25,11 +26,8 @@ import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import java.util.concurrent.TimeUnit
-import android.content.Context.WIFI_SERVICE
-import android.net.wifi.WifiManager
-import android.net.wifi.WifiConfiguration
 import java.net.UnknownHostException
+import java.util.concurrent.TimeUnit
 
 
 /**
@@ -60,6 +58,9 @@ class Finn(private val context: Context) {
     private val checkDevicePairedWorker: CheckDevicePairedWorker
     private val getActionsWorker: GetActionsWorker
     private val activateDeviceWorker: ActivateDeviceWorker
+    private val checkActionTriggerableWorker: CheckActionTriggerableWorker
+    private val storeActionsWorker: StoreActionsWorker
+    private val storeActionTriggeredWorker:StoreActionTriggeredWorker
 
     private val bluetoothManager: BluetoothManager
 
@@ -82,6 +83,9 @@ class Finn(private val context: Context) {
         checkDevicePairedWorker = CheckDevicePairedWorker(apiHelper, keyRepo, idRepo)
         getActionsWorker = GetActionsWorker(apiHelper, keyRepo, idRepo)
         activateDeviceWorker = ActivateDeviceWorker(apiHelper, keyRepo, idRepo)
+        checkActionTriggerableWorker = CheckActionTriggerableWorker(spHelper)
+        storeActionsWorker = StoreActionsWorker(spHelper)
+        storeActionTriggeredWorker = StoreActionTriggeredWorker(spHelper)
 
         bluetoothManager = BluetoothManager(
             context,
@@ -135,78 +139,57 @@ class Finn(private val context: Context) {
 
         bluetoothManager.start()
 
-        checkDeviceIsAlreadyPaired()
+        checkDevicePaired()
     }
 
     /**
      * When device is already paired and device is restarted. If not paired, start interval check.
      */
-    private fun checkDeviceIsAlreadyPaired() {
-        checkDevicePairedWorker.execute()
-            .flatMap {
-                // Paired ? Activated else start interval pair check
-                if (it) {
-                    activateDeviceWorker.execute()
-                } else {
-                    Single.just(it)
-                }
-            }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                {
-                    if (!it) {
-                        startIsPairedCheck()
-                    } else {
-                        onDevicePaired()
-                    }
-                },
-                {
-                    // Can happen when changing network SSID
-                    it.printStackTrace()
-                    when (it) {
-                        UnknownHostException::class -> checkDeviceIsAlreadyPaired()
-                        else -> checkDeviceIsAlreadyPaired()
-                    }
-                }
-            )
-            .apply { disposables.add(this) }
-    }
+    private fun checkDevicePaired() {
+        System.out.println("Finn:checkDevicePaired")
 
-    /**
-     * Check with intervals, if device is paired. Stops when an user pairs the device.
-     */
-    private fun startIsPairedCheck() {
-        var disposable: Disposable? = null
+        var isPairedAndActivated = false
 
         Observable.interval(10, TimeUnit.SECONDS)
             .flatMapSingle {
                 checkDevicePairedWorker.execute()
                     .flatMap {
+                        System.out.println("Finn:checkDevicePaired paired $it")
                         // Paired ? Activated else start interval pair check
                         if (it) {
-                            activateDeviceWorker.execute()
+                            getActionsWorker.execute()
+                                .flatMapCompletable(storeActionsWorker::execute)
+                                .andThen(activateDeviceWorker.execute())
                         } else {
                             Single.just(it)
                         }
                     }
             }
+            .takeWhile { !isPairedAndActivated }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 {
-                    if (it) {
-                        disposable?.dispose()
-                        onDevicePaired()
+                    System.out.println("Finn:checkDevicePaired isPairedAndActivated = ${it}")
+                    isPairedAndActivated = it
+                },
+                {
+                    System.out.println("Finn:checkDevicePaired failed")
+
+                    // Can happen when changing network SSID
+                    it.printStackTrace()
+
+                    when (it) {
+                        UnknownHostException::class -> checkDevicePaired()
+                        else -> checkDevicePaired()
                     }
                 },
                 {
-                    it.printStackTrace()
-
-                    startIsPairedCheck()
+                    System.out.println("Finn:checkDevicePaired complete")
+                    onDevicePaired()
                 }
             )
-            .apply { disposable = this }
+            .apply { disposables.add(this) }
     }
 
     /**
@@ -234,7 +217,17 @@ class Finn(private val context: Context) {
      * Trigger action at CORE
      */
     fun triggerAction(actionID: String, alternativeID: String? = null): Completable {
-        return triggerActionWorker.execute(actionID, idRepo.generateID(), alternativeID)
+        return checkActionTriggerableWorker.execute(actionID)
+            .flatMapCompletable {
+                System.out.println("Finn:triggerAction $it")
+
+                if (it) {
+                    triggerActionWorker.execute(actionID, idRepo.generateID(), alternativeID)
+                        .andThen(storeActionTriggeredWorker.execute(actionID))
+                } else {
+                    Completable.error(ActionFrequencyTimeNotPassed())
+                }
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
     }
