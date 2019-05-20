@@ -60,7 +60,7 @@ class Finn(private val context: Context) {
     private val activateDeviceWorker: ActivateDeviceWorker
     private val checkActionTriggerableWorker: CheckActionTriggerableWorker
     private val storeActionsWorker: StoreActionsWorker
-    private val storeActionTriggeredWorker:StoreActionTriggeredWorker
+    private val storeActionTriggeredWorker: StoreActionTriggeredWorker
 
     private val bluetoothManager: BluetoothManager
 
@@ -146,15 +146,12 @@ class Finn(private val context: Context) {
      * When device is already paired and device is restarted. If not paired, start interval check.
      */
     private fun checkDevicePaired() {
-        System.out.println("Finn:checkDevicePaired")
-
         var isPairedAndActivated = false
 
         Observable.interval(10, TimeUnit.SECONDS)
             .flatMapSingle {
                 checkDevicePairedWorker.execute()
                     .flatMap {
-                        System.out.println("Finn:checkDevicePaired paired $it")
                         // Paired ? Activated else start interval pair check
                         if (it) {
                             getActionsWorker.execute()
@@ -169,13 +166,8 @@ class Finn(private val context: Context) {
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
+                { isPairedAndActivated = it },
                 {
-                    System.out.println("Finn:checkDevicePaired isPairedAndActivated = ${it}")
-                    isPairedAndActivated = it
-                },
-                {
-                    System.out.println("Finn:checkDevicePaired failed")
-
                     // Can happen when changing network SSID
                     it.printStackTrace()
 
@@ -184,10 +176,7 @@ class Finn(private val context: Context) {
                         else -> checkDevicePaired()
                     }
                 },
-                {
-                    System.out.println("Finn:checkDevicePaired complete")
-                    onDevicePaired()
-                }
+                { onDevicePaired() }
             )
             .apply { disposables.add(this) }
     }
@@ -219,8 +208,6 @@ class Finn(private val context: Context) {
     fun triggerAction(actionID: String, alternativeID: String? = null): Completable {
         return checkActionTriggerableWorker.execute(actionID)
             .flatMapCompletable {
-                System.out.println("Finn:triggerAction $it")
-
                 if (it) {
                     triggerActionWorker.execute(actionID, idRepo.generateID(), alternativeID)
                         .andThen(storeActionTriggeredWorker.execute(actionID))

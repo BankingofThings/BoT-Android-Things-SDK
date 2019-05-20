@@ -8,7 +8,6 @@ class StoreActionsWorker(private val spHelper: SpHelper) {
     fun execute(actionModels: List<ActionModel>): Completable {
         return Completable.fromCallable {
             actionModels.forEach {
-                System.out.println("StoreActionsWorker:execute ${it.actionName} ${it.frequency}")
                 if (it.actionID != null && it.frequency != null) {
                     spHelper.setActionFrequency(it.actionID, it.frequency)
                 } else {

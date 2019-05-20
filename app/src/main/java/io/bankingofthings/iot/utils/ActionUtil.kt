@@ -10,8 +10,6 @@ object ActionUtil {
     fun checkFrequencyTime(lastTimeExecutedTime: Long, frequency: String): Boolean {
         val lastTimeExecutedCalendar = Calendar.getInstance().apply { timeInMillis = lastTimeExecutedTime }
 
-        System.out.println("ActionUtil:checkFrequencyTime frequency = ${frequency}")
-
         return when (frequency) {
             "minutely" -> lastTimeExecutedCalendar.apply { add(Calendar.MINUTE, 1) }.before(Calendar.getInstance())
             "hourly" -> lastTimeExecutedCalendar.apply { add(Calendar.HOUR, 1) }.before(Calendar.getInstance())

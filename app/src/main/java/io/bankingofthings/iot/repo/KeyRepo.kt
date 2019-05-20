@@ -20,8 +20,6 @@ class KeyRepo(spHelper: SpHelper) {
 
     init {
         if (!spHelper.getHasKeyPair()) {
-            System.out.println("KeyRepo: new RSA generated")
-
             KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore")
                 .apply {
                     initialize(

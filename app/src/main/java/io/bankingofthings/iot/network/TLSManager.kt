@@ -36,7 +36,7 @@ class TLSManager {
 
     fun verifyHostName(hostName: String?, sslSession: SSLSession?): Boolean {
         hostNames.forEach {
-            if (hostName?.contains(it, false) == true) {
+            if (hostName == it) {
                 return true
             }
         }

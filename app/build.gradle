@@ -20,7 +20,7 @@ android {
             buildConfigField "String", "BUILD_DATE", '"19-02-2019"'
             buildConfigField "String", "HOSTNAME", '"Sony Walkman"'
             buildConfigField "String", "MAKER_ID", '"ff5e24b8-8082-4df6-9bf6-3476580d1cfc"'
-            buildConfigField "String", "BOT_HOST", '"bankingofthings.io"'
+            buildConfigField "String", "BOT_HOST", '"api.bankingofthings.io"'
             buildConfigField "String", "BASE_URL", '"https://api.bankingofthings.io/bot_iot/"'
             // max 8 characters
             buildConfigField "String", "DEVICE_NAME", '"Things"'
@@ -35,7 +35,7 @@ android {
             buildConfigField "String", "BUILD_DATE", '"19-02-2019"'
             buildConfigField "String", "HOSTNAME", '"Sony Walkman"'
             buildConfigField "String", "MAKER_ID", '"ff5e24b8-8082-4df6-9bf6-3476580d1cfc"'
-            buildConfigField "String", "BOT_HOST", '"bankingofthings.io"'
+            buildConfigField "String", "BOT_HOST", '"api-dev.bankingofthings.io"'
             buildConfigField "String", "BASE_URL", '"https://api-dev.bankingofthings.io/bot_iot/"'
             // max 8 characters
             buildConfigField "String", "DEVICE_NAME", '"Things"'
