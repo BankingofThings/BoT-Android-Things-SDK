@@ -16,7 +16,7 @@ import retrofit2.converter.gson.GsonConverterFactory
  * Created by Ercan Bozoglu on 13/02/2019
  * Copyright @ 2018 BankingOfThings.io. All Right reserved.
  */
-class ApiHelper(private val sslManager: SSLManager) {
+class ApiHelper(private val tlsManager: TLSManager) {
     private var retrofit: Retrofit
     private var coreApi: CoreApi
 
@@ -33,14 +33,13 @@ class ApiHelper(private val sslManager: SSLManager) {
 
     /**
      * Create default client
-     * Uses SSLManager socketFactory for the security
+     * Uses tlsManager socketFactory for the security
      * Triggered at every api call
      */
     private fun createClient(): OkHttpClient {
         return OkHttpClient().newBuilder()
-            .certificatePinner(sslManager.getCertificatePinner())
-            .sslSocketFactory(sslManager.getSocketFactory(), sslManager.getTrustManager())
-            .hostnameVerifier(sslManager::verifyHostName)
+            .certificatePinner(tlsManager.getCertificatePinner())
+            .hostnameVerifier(tlsManager::verifyHostName)
             .addInterceptor(
                 HttpLoggingInterceptor().apply {
                     this.level = HttpLoggingInterceptor.Level.BODY

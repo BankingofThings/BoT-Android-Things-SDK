@@ -13,7 +13,7 @@ import io.bankingofthings.iot.error.ActionFrequencyTimeNotPassed
 import io.bankingofthings.iot.interactors.*
 import io.bankingofthings.iot.model.domain.ActionModel
 import io.bankingofthings.iot.network.ApiHelper
-import io.bankingofthings.iot.network.SSLManager
+import io.bankingofthings.iot.network.TLSManager
 import io.bankingofthings.iot.network.pojo.BotDeviceSsidPojo
 import io.bankingofthings.iot.repo.DeviceRepo
 import io.bankingofthings.iot.repo.IdRepo
@@ -70,7 +70,7 @@ class Finn(private val context: Context) {
         instance = this
 
         spHelper = SpHelper(context.getSharedPreferences("bot", Context.MODE_PRIVATE))
-        apiHelper = ApiHelper(SSLManager()
+        apiHelper = ApiHelper(TLSManager()
             .apply { setCertificateInputStream(context.resources.openRawResource(R.raw.botdomain)) })
 
         keyRepo = KeyRepo(spHelper)

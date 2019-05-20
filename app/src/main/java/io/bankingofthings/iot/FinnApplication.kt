@@ -1,8 +1,6 @@
 package io.bankingofthings.iot
 
 import android.app.Application
-import io.bankingofthings.iot.network.ApiHelper
-import io.bankingofthings.iot.network.SSLManager
 
 /**
  * Created by Ercan Bozoglu on 13/02/2019
