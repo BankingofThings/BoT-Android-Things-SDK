@@ -4,13 +4,11 @@ import io.bankingofthings.iot.BuildConfig
 import io.bankingofthings.iot.storage.SpHelper
 import java.util.*
 
-class IdRepo(spHelper: SpHelper) {
+class IdRepo(spHelper: SpHelper, val makerID: String) {
     var deviceID: String
 
-    val makerID = BuildConfig.MAKER_ID
-
     init {
-        if (!spHelper.getHasDeviceID() || BuildConfig.GENERATE_DEVICE_ID_EVERY_RUN) {
+        if (!spHelper.getHasDeviceID()) {
             deviceID = generateID()
 
             spHelper.storeDeviceID(deviceID)
@@ -23,7 +21,7 @@ class IdRepo(spHelper: SpHelper) {
     /**
      * Returns random UUID
      */
-    public fun generateID(): String {
+    fun generateID(): String {
         return UUID.randomUUID().toString()
     }
 }

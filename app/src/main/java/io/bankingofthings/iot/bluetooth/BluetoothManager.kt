@@ -19,9 +19,11 @@ import java.util.concurrent.TimeUnit
 class BluetoothManager(
     private val context: Context,
     private val nativeBluetoothManager: BluetoothManager,
-    private val deviceModel: DeviceModel,
-    private val botDeviceModel: BotDeviceModel,
-    private val networkModel: NetworkModel,
+    deviceModel: DeviceModel,
+    botDeviceModel: BotDeviceModel,
+    networkModel: NetworkModel,
+    private val blueToothName: String,
+    private val hasWifi: Boolean,
     private val callback: Callback
 ) {
     interface Callback {
@@ -68,7 +70,7 @@ class BluetoothManager(
     }
 
     private fun startAdvertising() {
-        nativeBluetoothManager.adapter.setName(BuildConfig.DEVICE_NAME)
+        nativeBluetoothManager.adapter.setName(blueToothName)
 
         val settings = AdvertiseSettings.Builder()
             .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
@@ -264,7 +266,7 @@ class BluetoothManager(
                     )
                 )
 
-                if (BuildConfig.HAS_WIFI) {
+                if (hasWifi) {
                     addCharacteristic(
                         BluetoothGattCharacteristic(
                             UUID_DEVICE_WIFI,

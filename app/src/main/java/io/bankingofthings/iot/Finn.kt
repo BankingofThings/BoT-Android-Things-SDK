@@ -9,7 +9,7 @@ import android.net.wifi.WifiManager
 import com.google.gson.Gson
 import io.bankingofthings.iot.bluetooth.BluetoothManager
 import io.bankingofthings.iot.callback.FinnStartCallback
-import io.bankingofthings.iot.error.ActionFrequencyTimeNotPassed
+import io.bankingofthings.iot.error.*
 import io.bankingofthings.iot.interactors.*
 import io.bankingofthings.iot.model.domain.ActionModel
 import io.bankingofthings.iot.network.ApiHelper
@@ -36,8 +36,26 @@ import java.util.concurrent.TimeUnit
  * Before you start, please configure app.gradle with your makerID
  *
  * To start Finn, just call start(callback) and after pairing with companion app, you can trigger actions.
+
+ * @param makerID Portal MakerID (36 characters)
+ * @param hostName Manufacturer/Company name
+ * @param deviceName Displayed when bluetooth device is discovered (max 8 characters)
+ * @param buildDate Date to be stored at CORE (DD-MM-YYYY)
+ * @param hasWifi Determines if app user can change the SSID/Password on the device
+ * @param multiPair Determines if device can be added by multiple app users, with each unique aid
+ * @param aid Alternative Identifier Display name, which will be shown to the app user
  */
-class Finn(private val context: Context) {
+class Finn(
+    private val context: Context,
+    private val makerID: String,
+    private val hostName: String,
+    private val deviceName: String,
+    private val blueToothName: String,
+    private val buildDate: String,
+    private val hasWifi: Boolean,
+    private val multiPair: Boolean,
+    private val aid: String? = null
+) {
     companion object {
         @SuppressLint("StaticFieldLeak")
         lateinit var instance: Finn
@@ -66,16 +84,46 @@ class Finn(private val context: Context) {
 
     private lateinit var callback: FinnStartCallback
 
+    @Throws(
+        MakerIDInvalidError::class,
+        HostNameEmptyError::class,
+        BlueToothNameTooLongError::class,
+        AlternativeIdentifierDisplayNameEmptyError::class
+    )
+    private fun checkParamsValid() {
+        if (makerID.length != 36) {
+            throw MakerIDInvalidError()
+        }
+
+        if (hostName.isBlank()) {
+            throw HostNameEmptyError()
+        }
+
+        if (blueToothName.isBlank() || blueToothName.length > 8) {
+            throw BlueToothNameTooLongError()
+        }
+
+        if (multiPair && aid?.isEmpty() == true) {
+            throw AlternativeIdentifierDisplayNameEmptyError()
+        }
+    }
+
     init {
+        checkParamsValid()
+
         instance = this
 
         spHelper = SpHelper(context.getSharedPreferences("bot", Context.MODE_PRIVATE))
+
+        // Uncomment when new DeviceID and RSA keys is needed. This also generates new data every run.
+        spHelper.removeAllData()
+
         apiHelper = ApiHelper(TLSManager()
             .apply { setCertificateInputStream(context.resources.openRawResource(R.raw.botdomain)) })
 
         keyRepo = KeyRepo(spHelper)
-        idRepo = IdRepo(spHelper)
-        deviceRepo = DeviceRepo(context, keyRepo, idRepo)
+        idRepo = IdRepo(spHelper, makerID)
+        deviceRepo = DeviceRepo(context, keyRepo, idRepo, hostName, deviceName, buildDate, hasWifi, multiPair, aid)
 
         qrBitmap = QRUtil.encodeAsBitmap(Gson().toJson(deviceRepo.deviceModel))
 
@@ -93,6 +141,8 @@ class Finn(private val context: Context) {
             deviceRepo.deviceModel,
             deviceRepo.botDeviceModel,
             deviceRepo.networkModel,
+            blueToothName,
+            hasWifi,
             object : BluetoothManager.Callback {
                 override fun onWifiCredentialsChanged(pojo: BotDeviceSsidPojo) {
                     changeWifiCredentials(pojo)
@@ -152,11 +202,13 @@ class Finn(private val context: Context) {
             .flatMapSingle {
                 checkDevicePairedWorker.execute()
                     .flatMap {
+                        System.out.println("Finn:checkDevicePaired it = ${it}")
                         // Paired ? Activated else start interval pair check
                         if (it) {
                             getActionsWorker.execute()
                                 .flatMapCompletable(storeActionsWorker::execute)
                                 .andThen(activateDeviceWorker.execute())
+                                .toSingle { it }
                         } else {
                             Single.just(it)
                         }
@@ -173,6 +225,7 @@ class Finn(private val context: Context) {
 
                     when (it) {
                         UnknownHostException::class -> checkDevicePaired()
+                        DeviceActivationFailedError::class -> checkDevicePaired()
                         else -> checkDevicePaired()
                     }
                 },
@@ -183,10 +236,10 @@ class Finn(private val context: Context) {
 
     /**
      * When devices is by client paired
-     * If device can only be paired with 1 user (NOT multipair), then stop advertising
+     * If device can only be paired with 1 user (NOT multi pair), then stop advertising
      */
     private fun onDevicePaired() {
-        if (!BuildConfig.MULTI_PAIR) {
+        if (!multiPair) {
             bluetoothManager.kill()
         }
 
@@ -205,16 +258,15 @@ class Finn(private val context: Context) {
     /**
      * Trigger action at CORE
      */
+    @Throws(
+        ActionFrequencyNotFoundError::class,
+        ActionFrequencyTimeNotPassedError::class,
+        ActionTriggerFailedError::class
+    )
     fun triggerAction(actionID: String, alternativeID: String? = null): Completable {
         return checkActionTriggerableWorker.execute(actionID)
-            .flatMapCompletable {
-                if (it) {
-                    triggerActionWorker.execute(actionID, idRepo.generateID(), alternativeID)
-                        .andThen(storeActionTriggeredWorker.execute(actionID))
-                } else {
-                    Completable.error(ActionFrequencyTimeNotPassed())
-                }
-            }
+            .andThen(triggerActionWorker.execute(actionID, idRepo.generateID(), alternativeID))
+            .andThen(storeActionTriggeredWorker.execute(actionID))
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
     }

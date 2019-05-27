@@ -9,6 +9,10 @@ import org.json.JSONObject
 
 /**
  * Gets status from CORE and checks if device is paired
+ * 1. Do API call
+ * 2. Check response signing is valid
+ * 3. Parse bot object
+ * 4. Check result
  */
 class CheckDevicePairedWorker(
     private val apiHelper: ApiHelper,

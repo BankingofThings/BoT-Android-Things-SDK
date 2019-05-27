@@ -5,9 +5,15 @@ import java.util.*
 /**
  * Created by Ercan Bozoglu on 2019-05-20
  * Copyright @ 2018 BankingOfThings.io. All Right reserved.
+ *
+ * Helper class for actions
  */
 object ActionUtil {
-    fun checkFrequencyTime(lastTimeExecutedTime: Long, frequency: String): Boolean {
+
+    /**
+     * Checks if action last time of execution is passed with the frequency time.
+     */
+    fun checkFrequencyTimePassed(lastTimeExecutedTime: Long, frequency: String): Boolean {
         val lastTimeExecutedCalendar = Calendar.getInstance().apply { timeInMillis = lastTimeExecutedTime }
 
         return when (frequency) {

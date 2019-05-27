@@ -5,6 +5,9 @@ import android.databinding.DataBindingUtil
 import android.os.Bundle
 import io.bankingofthings.iot.callback.FinnStartCallback
 import io.bankingofthings.iot.databinding.ActivityMainBinding
+import io.bankingofthings.iot.error.ActionFrequencyNotFoundError
+import io.bankingofthings.iot.error.ActionFrequencyTimeNotPassedError
+import io.bankingofthings.iot.error.ActionTriggerFailedError
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -69,10 +72,23 @@ class MainActivity : Activity() {
                         {
                             System.out.println("MainActivity:onDevicePaired interval")
 
-                            finn.triggerAction("B6D56D4D-F559-4E14-911C-22111C68D16B")
+                            finn.triggerAction("43260E5C-C0A4-452C-8D03-38420AA9244C")
                                 .subscribe(
                                     { System.out.println("MainActivity:onDevicePaired triggered") },
-                                    { it.printStackTrace() }
+                                    {
+                                        it.printStackTrace()
+
+                                        when (it::class) {
+                                            ActionFrequencyNotFoundError::class -> {
+                                            }
+                                            ActionFrequencyTimeNotPassedError::class -> {
+                                            }
+                                            ActionTriggerFailedError::class -> {
+                                            }
+                                            else -> {
+                                            }
+                                        }
+                                    }
                                 )
                         },
                         {

@@ -12,7 +12,20 @@ import io.bankingofthings.iot.model.domain.DeviceModel
 import io.bankingofthings.iot.model.domain.NetworkModel
 import java.nio.ByteOrder
 
-class DeviceRepo(private val context: Context, private val keyRepo: KeyRepo, private val idRepo: IdRepo) {
+/**
+ * Contains different type of device models. These are used for converting to pojo models.
+ */
+class DeviceRepo(
+    private val context: Context,
+    private val keyRepo: KeyRepo,
+    private val idRepo: IdRepo,
+    private val hostName: String,
+    private val deviceName: String,
+    private val buildDate: String,
+    private val hasWifi:Boolean,
+    private val multiPair: Boolean,
+    private val aid: String?
+) {
     val deviceModel: DeviceModel
     val networkModel: NetworkModel
     val botDeviceModel: BotDeviceModel
@@ -31,9 +44,9 @@ class DeviceRepo(private val context: Context, private val keyRepo: KeyRepo, pri
             idRepo.makerID,
             idRepo.deviceID,
             Base64.encodeToString(keyRepo.publicKey.encoded, Base64.NO_WRAP),
-            BuildConfig.DEVICE_NAME,
-            if (BuildConfig.MULTI_PAIR) 1 else 0,
-            BuildConfig.ALTERNATIVE_IDENTIFIER_DISPLAYNAME
+            deviceName,
+            if (multiPair) 1 else 0,
+            aid
         )
     }
 
@@ -46,16 +59,16 @@ class DeviceRepo(private val context: Context, private val keyRepo: KeyRepo, pri
 
         return BotDeviceModel(
             "android things",
-            BuildConfig.BUILD_DATE,
+            buildDate,
             Build.HARDWARE,
             Build.CPU_ABI,
             Runtime.getRuntime().availableProcessors().toString(),
-            BuildConfig.HOSTNAME,
+            hostName,
             if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) "little" else "big",
             (memoryInfo.availMem).toString() + "/" + (memoryInfo.totalMem).toString(),
             networkModel.network,
             networkModel.ip,
-            false
+            hasWifi
         )
     }
 

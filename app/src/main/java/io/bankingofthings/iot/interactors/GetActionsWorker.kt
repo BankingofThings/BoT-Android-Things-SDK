@@ -9,7 +9,17 @@ import io.bankingofthings.iot.repo.KeyRepo
 import io.jsonwebtoken.Jwts
 import io.reactivex.Single
 
+/**
+ * Fetches list of all actions from CORE
+ * 1. Do API call
+ * 2. Check response signing is valid
+ * 3. Parse bot object
+ * 4. Convert pojo to Domain Model (list of action models)
+ */
 class GetActionsWorker(private val apiHelper: ApiHelper, private val keyRepo: KeyRepo, private val idRepo: IdRepo) {
+    /**
+     * @return list of action models
+     */
     fun execute(): Single<List<ActionModel>> {
         return apiHelper.getActions(idRepo.makerID, idRepo.deviceID)
             .map {

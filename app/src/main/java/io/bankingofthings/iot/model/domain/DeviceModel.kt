@@ -9,4 +9,4 @@ data class DeviceModel (
     val publicKey:String,
     val name:String,
     val multipair: Int,
-    val aid: String)
+    val aid: String?)

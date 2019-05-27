@@ -30,6 +30,8 @@ class SpHelper(private val sharedPreferences: SharedPreferences) {
      * Get action frequency
      */
     fun getActionFrequency(actionID: String): String? {
+        System.out.println("SpHelper:getActionFrequency actionID = ${actionID}")
+        System.out.println("SpHelper:getActionFrequency sharedPreferences.all = ${sharedPreferences.all}")
         return sharedPreferences.getString(SpNames.ACTION_FREQUENCY.name + actionID, null)
     }
 
@@ -42,9 +44,17 @@ class SpHelper(private val sharedPreferences: SharedPreferences) {
 
     /**
      * Get last execution time
-     * @return time of exection (Calendar UTC milliseconds from the epoch)
+     * @return time of exection (Calendar UTC milliseconds from the epoch). -1 is returned if none exists
      */
     fun getActionLastExecutionTime(actionID: String): Long {
         return sharedPreferences.getLong(SpNames.ACTION_LAST_EXECUTION_TIME.name + actionID, -1L)
+    }
+
+    /**
+     * Removes all data
+     */
+    fun removeAllData() {
+        sharedPreferences.edit().clear().commit()
+        System.out.println("SpHelper:removeAllData sharedPreferences.all = ${sharedPreferences.all}")
     }
 }

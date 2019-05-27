@@ -13,6 +13,14 @@ import io.bankingofthings.iot.utils.JWTUtil
 import io.jsonwebtoken.Jwts
 import io.reactivex.Completable
 
+/**
+ * Trigger action at CORE
+ * 1. Create pojo and sign with private RSA key
+ * 2. Do API call
+ * 3. Check resopnse signing is valid
+ * 4. Parse object
+ * 5. Check result
+ */
 class TriggerActionWorker(
     private val apiHelper: ApiHelper,
     private val keyRepo: KeyRepo,
@@ -21,10 +29,11 @@ class TriggerActionWorker(
     /**
      * alternativeID is only necessary if in BuildConfig.MULTI_PAIR = true
      */
-    fun execute(actionID: String, queueID:String, alternativeID: String? = null): Completable {
+    @Throws(ActionTriggerFailedError::class)
+    fun execute(actionID: String, queueID: String, alternativeID: String? = null): Completable {
         val token = JWTUtil.create(
             // With multi pair alternativeID should not be null
-            if (BuildConfig.MULTI_PAIR && alternativeID != null) {
+            if (alternativeID != null) {
                 TriggerActionAlternativeIDParamPojo(
                     TriggerActionAlternativeIDParamPojo.Bot(
                         idRepo.deviceID,

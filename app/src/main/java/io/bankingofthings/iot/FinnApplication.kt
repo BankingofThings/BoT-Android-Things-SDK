@@ -13,7 +13,16 @@ class FinnApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        finn = Finn(this)
+        finn = Finn(
+            this,
+            "ff5e24b8-8082-4df6-9bf6-3476580d1cfc",
+            "Finn - BoT",
+            "Finn Things Device",
+            "Things",
+            "19-02-2019",
+            true,
+            false,
+            "my unique ID")
     }
 
     override fun onTerminate() {

@@ -13,6 +13,14 @@ import java.security.spec.X509EncodedKeySpec
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 
+/**
+ * Stores RSA public and private key on KeyStore (Android native secure location).
+ *
+ * PublicKey is created and stored in the Device Model. The app user can read the json format with Bluetooth, QR or NFC.
+ * The CORE will receive the public key
+ *
+ * Generates server public key RSA from string. Used for verifying responses from CORE
+ */
 class KeyRepo(spHelper: SpHelper) {
     var publicKey: PublicKey
     var privateKey: PrivateKey
