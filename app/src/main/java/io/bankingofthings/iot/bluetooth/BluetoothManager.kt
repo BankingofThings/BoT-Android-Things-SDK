@@ -30,6 +30,7 @@ class BluetoothManager(
         fun onWifiCredentialsChanged(pojo: BotDeviceSsidPojo)
     }
 
+    var started: Boolean = false
     private val UUID = java.util.UUID.fromString("729BE9C4-3C61-4EFB-884F-B310B6FFFFD1")
     private val UUID_DEVICE = java.util.UUID.fromString("CAD1B513-2DA4-4609-9908-234C6D1B2A9C")
     private val UUID_DEVICE_INFO = java.util.UUID.fromString("CD1B3A04-FA33-41AA-A25B-8BEB2D3BEF4E")
@@ -64,9 +65,21 @@ class BluetoothManager(
      * Initialize and start the bluetooth device
      */
     fun start() {
+        System.out.println("BluetoothManager:start")
+
+        started = true
+
         createGattService()
 
         startAdvertising()
+    }
+
+    fun kill() {
+        System.out.println("BluetoothManager:kill")
+        stopAdvertising()
+        gattServer?.close()
+
+        started = false
     }
 
     private fun startAdvertising() {
@@ -94,11 +107,6 @@ class BluetoothManager(
 
     private fun stopAdvertising() {
         nativeBluetoothManager.adapter.bluetoothLeAdvertiser.stopAdvertising(advertisingCallback)
-    }
-
-    fun kill() {
-        stopAdvertising()
-        gattServer?.close()
     }
 
     /**
@@ -235,7 +243,12 @@ class BluetoothManager(
      * Returns next block (buffer) of json part
      */
     private fun takeOffset(json: String, offset: Int): ByteArray {
+        System.out.println("BluetoothManager:takeOffset json = ${json}")
+
         return json.toByteArray().let { it.copyOfRange(offset, it.size) }
+            .apply {
+                System.out.println("BluetoothManager:takeOffset ${String(this)}")
+            }
     }
 
     /**

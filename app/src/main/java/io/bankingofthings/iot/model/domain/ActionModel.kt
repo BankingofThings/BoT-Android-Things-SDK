@@ -14,4 +14,8 @@ data class ActionModel(
     val type: String? = null,
     val info: String? = null,
     val metadata: String? = null
-)
+) {
+    override fun toString(): String {
+        return "$actionID ActionModel $actionName: $info $price $frequency"
+    }
+}

@@ -10,9 +10,9 @@ object QRUtil {
     /**
      * TODO catch writer exception while encoding?
      */
-    fun encodeAsBitmap(str: String): Bitmap {
+    fun encodeAsBitmap(message: String): Bitmap {
         val result: BitMatrix = MultiFormatWriter().encode(
-            str, BarcodeFormat.QR_CODE, 512, 512, null
+            message, BarcodeFormat.QR_CODE, 512, 512, null
         )
 
         val w = result.width

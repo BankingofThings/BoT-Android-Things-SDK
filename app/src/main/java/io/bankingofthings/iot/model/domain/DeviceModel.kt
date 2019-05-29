@@ -1,7 +1,7 @@
 package io.bankingofthings.iot.model.domain
 
 /**
- * Contains the data which can be send to clients
+ * Contains the data which can be send to app user
  */
 data class DeviceModel (
     val makerID:String,

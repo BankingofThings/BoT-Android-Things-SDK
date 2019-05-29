@@ -1,60 +1,62 @@
 package io.bankingofthings.iot.storage
 
 import android.content.SharedPreferences
-import java.util.*
 
+/**
+ * Shared Preferences Helper. Helper class to managing storage keys (SpNames)
+ */
 class SpHelper(private val sharedPreferences: SharedPreferences) {
-    fun getHasKeyPair(): Boolean = sharedPreferences.getBoolean(SpNames.HAS_KEY_PAIR.name, false)
+    fun getHasRSAKeys(): Boolean = sharedPreferences.getBoolean(SpNames.HAS_RSA_KEYS.name, false)
+
+    fun storeHasRSAKeys(hasRSAKeys: Boolean) =
+        sharedPreferences.edit().putBoolean(SpNames.HAS_RSA_KEYS.name, hasRSAKeys).apply()
 
     fun getHasDeviceID(): Boolean = sharedPreferences.getBoolean(SpNames.HAS_DEVICE_ID.name, false)
 
-    fun storeDeviceID(value: String) =
-        sharedPreferences.edit().putString(SpNames.DEVICE_ID.name, value).apply()
+    fun storeHasDeviceID(hasDeviceID: Boolean) =
+        sharedPreferences.edit().putBoolean(SpNames.HAS_DEVICE_ID.name, hasDeviceID).apply()
 
     fun getDeviceID(): String = sharedPreferences.getString(SpNames.DEVICE_ID.name, "") ?: ""
 
-    fun setHasKeyPair(value: Boolean) =
-        sharedPreferences.edit().putBoolean(SpNames.HAS_KEY_PAIR.name, value).apply()
-
-    fun setHasDeviceID(value: Boolean) =
-        sharedPreferences.edit().putBoolean(SpNames.HAS_DEVICE_ID.name, value).apply()
+    /**
+     *
+     * @param deviceID generated UUID
+     */
+    fun storeDeviceID(deviceID: String) =
+        sharedPreferences.edit().putString(SpNames.DEVICE_ID.name, deviceID).apply()
 
     /**
-     * Store action frequency
+     *
+     * @param actionID the ID received from CORE
      */
-    fun setActionFrequency(actionID: String, frequency: String) {
+    fun getActionFrequency(actionID: String): String? =
+        sharedPreferences.getString(SpNames.ACTION_FREQUENCY.name + actionID, null)
+
+    /**
+     *
+     * @param actionID the ID received from CORE
+     */
+    fun storeActionFrequency(actionID: String, frequency: String) =
         sharedPreferences.edit().putString(SpNames.ACTION_FREQUENCY.name + actionID, frequency).apply()
-    }
-
-    /**
-     * Get action frequency
-     */
-    fun getActionFrequency(actionID: String): String? {
-        System.out.println("SpHelper:getActionFrequency actionID = ${actionID}")
-        System.out.println("SpHelper:getActionFrequency sharedPreferences.all = ${sharedPreferences.all}")
-        return sharedPreferences.getString(SpNames.ACTION_FREQUENCY.name + actionID, null)
-    }
-
-    /**
-     * Store action last execution time
-     */
-    fun setActionLastExecutionTime(actionID: String, time: Long) {
-        sharedPreferences.edit().putLong(SpNames.ACTION_LAST_EXECUTION_TIME.name + actionID, time).apply()
-    }
 
     /**
      * Get last execution time
-     * @return time of exection (Calendar UTC milliseconds from the epoch). -1 is returned if none exists
+     * @param actionID the ID received from CORE
+     * @return time of execution (Calendar UTC milliseconds from the epoch). -1 is returned if none exists
      */
-    fun getActionLastExecutionTime(actionID: String): Long {
-        return sharedPreferences.getLong(SpNames.ACTION_LAST_EXECUTION_TIME.name + actionID, -1L)
-    }
+    fun getActionLastExecutionTime(actionID: String): Long =
+        sharedPreferences.getLong(SpNames.ACTION_LAST_EXECUTION_TIME.name + actionID, -1L)
+
+    /**
+     * Store action last execution time
+     * @param actionID the ID received from CORE
+     * @param time time of execution (Calendar UTC milliseconds from the epoch). -1 is returned if none exists
+     */
+    fun storeActionLastExecutionTime(actionID: String, time: Long) =
+        sharedPreferences.edit().putLong(SpNames.ACTION_LAST_EXECUTION_TIME.name + actionID, time).apply()
 
     /**
      * Removes all data
      */
-    fun removeAllData() {
-        sharedPreferences.edit().clear().commit()
-        System.out.println("SpHelper:removeAllData sharedPreferences.all = ${sharedPreferences.all}")
-    }
+    fun removeAllData() = sharedPreferences.edit().clear().commit()
 }

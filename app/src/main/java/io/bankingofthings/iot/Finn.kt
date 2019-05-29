@@ -6,9 +6,9 @@ import android.content.Context.WIFI_SERVICE
 import android.graphics.Bitmap
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
+import com.google.android.things.bluetooth.BluetoothPairingCallback
 import com.google.gson.Gson
 import io.bankingofthings.iot.bluetooth.BluetoothManager
-import io.bankingofthings.iot.callback.FinnStartCallback
 import io.bankingofthings.iot.error.*
 import io.bankingofthings.iot.interactors.*
 import io.bankingofthings.iot.model.domain.ActionModel
@@ -24,18 +24,17 @@ import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
+import okhttp3.internal.Internal.instance
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
 
 /**
- * Finn is created when application is started and can be used as a Singleton
+ * Finn is a singleton and can be
  *
- * Before you start, please configure app.gradle with your makerID
- *
- * To start Finn, just call start(callback) and after pairing with companion app, you can trigger actions.
+ * To start Finn, just call start(startCallback) and after pairing with companion app, you can trigger actions.
 
  * @param makerID Portal MakerID (36 characters)
  * @param hostName Manufacturer/Company name
@@ -44,6 +43,7 @@ import java.util.concurrent.TimeUnit
  * @param hasWifi Determines if app user can change the SSID/Password on the device
  * @param multiPair Determines if device can be added by multiple app users, with each unique aid
  * @param aid Alternative Identifier Display name, which will be shown to the app user
+ * @param newInstall Is by default false, it will then reuse existing id's and keys. When true, all data will be cleared and new deviceID and keys will be regenerated.
  */
 class Finn(
     private val context: Context,
@@ -54,14 +54,38 @@ class Finn(
     private val buildDate: String,
     private val hasWifi: Boolean,
     private val multiPair: Boolean,
-    private val aid: String? = null
+    private val aid: String? = null,
+    private val newInstall: Boolean = false
 ) {
-    companion object {
-        @SuppressLint("StaticFieldLeak")
-        lateinit var instance: Finn
+    /**
+     * Defines if device is ready (Paired with an user)
+     */
+    interface StartCallback {
+        fun onDevicePaired()
     }
 
-    private val disposables = arrayListOf<Disposable>()
+    interface GetActionsCallback {
+        fun onGetActionsResult(actionList: List<ActionModel>)
+        fun onError(e: Throwable)
+    }
+
+    interface TriggerActionCallback {
+        fun onTriggerActionComplete()
+        fun onError(e: Throwable)
+    }
+
+    companion object {
+        @SuppressLint("StaticFieldLeak")
+        var instance: Finn? = null
+            get() {
+                if (field == null) {
+                    System.out.println("Finn is already been destroyed")
+                }
+                return field
+            }
+    }
+
+    private val disposables: CompositeDisposable = CompositeDisposable()
 
     private val spHelper: SpHelper
     private val apiHelper: ApiHelper
@@ -77,12 +101,10 @@ class Finn(
     private val getActionsWorker: GetActionsWorker
     private val activateDeviceWorker: ActivateDeviceWorker
     private val checkActionTriggerableWorker: CheckActionTriggerableWorker
-    private val storeActionsWorker: StoreActionsWorker
+    private val storeActionFrequencyWorker: StoreActionFrequencyWorker
     private val storeActionTriggeredWorker: StoreActionTriggeredWorker
 
     private val bluetoothManager: BluetoothManager
-
-    private lateinit var callback: FinnStartCallback
 
     @Throws(
         MakerIDInvalidError::class,
@@ -109,14 +131,16 @@ class Finn(
     }
 
     init {
+        spHelper = SpHelper(context.getSharedPreferences("bot", Context.MODE_PRIVATE))
+
+        // Remove makerID, deviceID and keys
+        if (newInstall) {
+            spHelper.removeAllData()
+        }
+
         checkParamsValid()
 
         instance = this
-
-        spHelper = SpHelper(context.getSharedPreferences("bot", Context.MODE_PRIVATE))
-
-        // Uncomment when new DeviceID and RSA keys is needed. This also generates new data every run.
-        spHelper.removeAllData()
 
         apiHelper = ApiHelper(TLSManager()
             .apply { setCertificateInputStream(context.resources.openRawResource(R.raw.botdomain)) })
@@ -127,12 +151,12 @@ class Finn(
 
         qrBitmap = QRUtil.encodeAsBitmap(Gson().toJson(deviceRepo.deviceModel))
 
-        triggerActionWorker = TriggerActionWorker(apiHelper, keyRepo, idRepo)
         checkDevicePairedWorker = CheckDevicePairedWorker(apiHelper, keyRepo, idRepo)
-        getActionsWorker = GetActionsWorker(apiHelper, keyRepo, idRepo)
         activateDeviceWorker = ActivateDeviceWorker(apiHelper, keyRepo, idRepo)
+        getActionsWorker = GetActionsWorker(apiHelper, keyRepo, idRepo)
+        storeActionFrequencyWorker = StoreActionFrequencyWorker(spHelper)
         checkActionTriggerableWorker = CheckActionTriggerableWorker(spHelper)
-        storeActionsWorker = StoreActionsWorker(spHelper)
+        triggerActionWorker = TriggerActionWorker(apiHelper, keyRepo, idRepo)
         storeActionTriggeredWorker = StoreActionTriggeredWorker(spHelper)
 
         bluetoothManager = BluetoothManager(
@@ -174,76 +198,72 @@ class Finn(
     }
 
     /**
-     * Cleanup
+     * Cleanup: usefull when testing multiple makerID's.
+     * Kills running api calls
+     * Stops bluetooth
+     * Removes all data; deviceID, keys and other locally stored data.
      */
     fun destroy() {
-        disposables.map { it.dispose() }
-        bluetoothManager.kill()
+        stop()
+        spHelper.removeAllData()
+        instance = null
     }
 
     /**
-     * Start
+     * @see start():Completable
      */
-    fun start(callback: FinnStartCallback) {
-        this.callback = callback
-
-        bluetoothManager.start()
-
-        checkDevicePaired()
-    }
-
-    /**
-     * When device is already paired and device is restarted. If not paired, start interval check.
-     */
-    private fun checkDevicePaired() {
-        var isPairedAndActivated = false
-
-        Observable.interval(10, TimeUnit.SECONDS)
-            .flatMapSingle {
-                checkDevicePairedWorker.execute()
-                    .flatMap {
-                        System.out.println("Finn:checkDevicePaired it = ${it}")
-                        // Paired ? Activated else start interval pair check
-                        if (it) {
-                            getActionsWorker.execute()
-                                .flatMapCompletable(storeActionsWorker::execute)
-                                .andThen(activateDeviceWorker.execute())
-                                .toSingle { it }
-                        } else {
-                            Single.just(it)
-                        }
-                    }
-            }
-            .takeWhile { !isPairedAndActivated }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                { isPairedAndActivated = it },
-                {
-                    // Can happen when changing network SSID
-                    it.printStackTrace()
-
-                    when (it) {
-                        UnknownHostException::class -> checkDevicePaired()
-                        DeviceActivationFailedError::class -> checkDevicePaired()
-                        else -> checkDevicePaired()
-                    }
-                },
-                { onDevicePaired() }
-            )
+    fun start(startCallback: StartCallback) {
+        start()
+            .subscribe(startCallback::onDevicePaired) { it.printStackTrace() }
             .apply { disposables.add(this) }
     }
 
     /**
-     * When devices is by client paired
-     * If device can only be paired with 1 user (NOT multi pair), then stop advertising
+     * Pair device
+     * if success > get actions and store, and then activate device
+     * else > start bluetooth advertising and retry after 10 seconds
+     *
      */
-    private fun onDevicePaired() {
-        if (!multiPair) {
-            bluetoothManager.kill()
-        }
+    fun start(): Completable {
+        return checkDevicePairedWorker.execute()
+            .flatMapCompletable { isPaired ->
+                if (isPaired) {
+                    getActionsWorker.execute()
+                        .flatMapCompletable(storeActionFrequencyWorker::execute)
+                        .andThen(activateDeviceWorker.execute())
+                } else {
+                    throw DevicePairingFailed()
+                }
+            }
+            .doOnError {
+                it.printStackTrace()
 
-        callback.onDevicePaired()
+                when (it::class) {
+                    DevicePairingFailed::class -> {
+                        if (!bluetoothManager.started) {
+                            bluetoothManager.start()
+                        }
+                    }
+                }
+            }
+            .doOnComplete {
+                if (!multiPair) {
+                    bluetoothManager.kill()
+                }
+            }
+            .retryWhen { it.delay(10, TimeUnit.SECONDS) }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+    }
+
+    /**
+     * Stop
+     * Kill running api calls
+     * Stops bluetooth
+     */
+    fun stop() {
+        disposables.dispose()
+        bluetoothManager.kill()
     }
 
     /**
@@ -253,6 +273,17 @@ class Finn(
         return getActionsWorker.execute()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
+    }
+
+    /**
+     * Returns all actions stored at CORE.
+     */
+    fun getActions(callback: Finn.GetActionsCallback) {
+        getActionsWorker.execute()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(callback::onGetActionsResult, callback::onError)
+            .apply { disposables.add(this) }
     }
 
     /**
@@ -269,5 +300,18 @@ class Finn(
             .andThen(storeActionTriggeredWorker.execute(actionID))
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
+    }
+
+    /**
+     * Trigger action at CORE
+     */
+    fun triggerAction(actionID: String, alternativeID: String? = null, callback: Finn.TriggerActionCallback) {
+        checkActionTriggerableWorker.execute(actionID)
+            .andThen(triggerActionWorker.execute(actionID, idRepo.generateID(), alternativeID))
+            .andThen(storeActionTriggeredWorker.execute(actionID))
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(callback::onTriggerActionComplete, callback::onError)
+            .apply { disposables.add(this) }
     }
 }

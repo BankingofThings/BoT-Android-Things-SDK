@@ -7,14 +7,14 @@ import io.reactivex.Completable
 /**
  * Store the action frequency on shared preferences. It's used for checking action trigger interval time.
  */
-class StoreActionsWorker(private val spHelper: SpHelper) {
+class StoreActionFrequencyWorker(private val spHelper: SpHelper) {
     fun execute(actionModels: List<ActionModel>): Completable {
         return Completable.fromCallable {
             actionModels.forEach {
                 if (it.actionID != null && it.frequency != null) {
-                    spHelper.setActionFrequency(it.actionID, it.frequency)
+                    spHelper.storeActionFrequency(it.actionID, it.frequency)
                 } else {
-                    System.out.println("StoreActionsWorker:execute corrupt action ${it.actionID} - ${it.frequency}")
+                    System.out.println("StoreActionFrequencyWorker:execute corrupt action ${it.actionID} - ${it.frequency}")
                 }
             }
         }

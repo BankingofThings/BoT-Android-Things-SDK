@@ -22,14 +22,17 @@ class DeviceRepo(
     private val hostName: String,
     private val deviceName: String,
     private val buildDate: String,
-    private val hasWifi:Boolean,
+    private val hasWifi: Boolean,
     private val multiPair: Boolean,
     private val aid: String?
 ) {
     val deviceModel: DeviceModel
-    val networkModel: NetworkModel
     val botDeviceModel: BotDeviceModel
+    val networkModel: NetworkModel
 
+    /**
+     * Create networkModel before botDeviceModel, because it uses the network and ip values.
+     */
     init {
         deviceModel = createDeviceModel()
         networkModel = createNetworkModel()

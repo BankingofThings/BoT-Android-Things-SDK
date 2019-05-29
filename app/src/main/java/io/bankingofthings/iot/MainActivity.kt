@@ -1,19 +1,16 @@
 package io.bankingofthings.iot
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.databinding.DataBindingUtil
 import android.os.Bundle
-import io.bankingofthings.iot.callback.FinnStartCallback
 import io.bankingofthings.iot.databinding.ActivityMainBinding
 import io.bankingofthings.iot.error.ActionFrequencyNotFoundError
 import io.bankingofthings.iot.error.ActionFrequencyTimeNotPassedError
 import io.bankingofthings.iot.error.ActionTriggerFailedError
-import io.reactivex.Completable
+import io.bankingofthings.iot.model.domain.ActionModel
 import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
-import java.net.HttpURLConnection
-import java.net.URL
+import io.reactivex.disposables.CompositeDisposable
 import java.util.concurrent.TimeUnit
 
 
@@ -46,6 +43,8 @@ class MainActivity : Activity() {
 
     private lateinit var finn: Finn
 
+    private val disposables: CompositeDisposable = CompositeDisposable()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
@@ -57,74 +56,64 @@ class MainActivity : Activity() {
      * Example
      */
     private fun startFinn() {
-        finn = Finn.instance
+        finn = Finn(
+            this,
+            "ff5e24b8-8082-4df6-9bf6-3476580d1cfc",
+            "Finn - BoT",
+            "Finn Things Device",
+            "Things",
+            "19-02-2019",
+            true,
+            true,
+            "my unique ID",
+            false
+        )
 
-        finn.start(object : FinnStartCallback {
+        val aid = ""
 
-            /**
-             * When user has paired the device with QR, Bluetooth or NFC
-             */
-            override fun onDevicePaired() {
-                System.out.println("MainActivity:onDevicePaired")
-
-                Observable.interval(10, TimeUnit.SECONDS)
-                    .subscribe(
-                        {
-                            System.out.println("MainActivity:onDevicePaired interval")
-
-                            finn.triggerAction("43260E5C-C0A4-452C-8D03-38420AA9244C")
-                                .subscribe(
-                                    { System.out.println("MainActivity:onDevicePaired triggered") },
-                                    {
-                                        it.printStackTrace()
-
-                                        when (it::class) {
-                                            ActionFrequencyNotFoundError::class -> {
-                                            }
-                                            ActionFrequencyTimeNotPassedError::class -> {
-                                            }
-                                            ActionTriggerFailedError::class -> {
-                                            }
-                                            else -> {
-                                            }
-                                        }
-                                    }
-                                )
-                        },
-                        {
-                            System.out.println("MainActivity:onDevicePaired error")
-                            it.printStackTrace()
-                        },
-                        {
-                            System.out.println("MainActivity:onDevicePaired completed")
-                        }
-                    )
-            }
-        })
-
-        binding.qrHolder.setImageBitmap(finn.qrBitmap)
-
-//        Completable
-//            .fromAction {
-//                val conn = URL("http://go.com").openConnection()
-//                conn.connect()
-//
-//                val inputStream = conn.getInputStream()
-//
-//                val result = String(inputStream.readBytes())
-//
-//                System.out.println("MainActivity:startFinn result = ${result}")
-//            }
-//            .observeOn(AndroidSchedulers.mainThread())
-//            .subscribeOn(Schedulers.io())
+        // Observable pattern example
+//        finn.start()
+//            .andThen(finn.getActions())
+//            .map { it.forEach { System.out.println("MainActivity:startFinn $it") } }
+//            .toCompletable()
+//            .andThen(finn.triggerAction("43260E5C-C0A4-452C-8D03-38420AA9244C"))
 //            .subscribe(
 //                {
-//                    System.out.println("MainActivity:startFinn 123")
+//                    System.out.println("MainActivity:startFinn action triggered")
 //                },
 //                {
 //                    it.printStackTrace()
 //                }
 //            )
+//            .apply { disposables.add(this) }
+
+        // Callback pattern example
+        finn.start(object:Finn.StartCallback {
+            override fun onDevicePaired() {
+
+                finn.getActions(object:Finn.GetActionsCallback{
+                    override fun onGetActionsResult(actionList: List<ActionModel>) {
+
+                        finn.triggerAction("43260E5C-C0A4-452C-8D03-38420AA9244C", null, object:Finn.TriggerActionCallback{
+                            override fun onTriggerActionComplete() {
+                                System.out.println("MainActivity:onTriggerActionComplete action triggered")
+                            }
+
+                            override fun onError(e: Throwable) {
+                                e.printStackTrace()
+                                System.out.println("MainActivity:onError action trigger failed")
+                            }
+                        })
+                    }
+
+                    override fun onError(e: Throwable) {
+                        e.printStackTrace()
+                    }
+                })
+            }
+        })
+
+        binding.qrHolder.setImageBitmap(finn.qrBitmap)
     }
 
     /**

@@ -5,7 +5,7 @@ package io.bankingofthings.iot.storage
  * Copyright @ 2018 BankingOfThings.io. All Right reserved.
  */
 enum class SpNames {
-    HAS_KEY_PAIR,
+    HAS_RSA_KEYS,
     HAS_DEVICE_ID,
     DEVICE_ID,
     ACTION_FREQUENCY,

@@ -1,6 +1,5 @@
 package io.bankingofthings.iot.repo
 
-import io.bankingofthings.iot.BuildConfig
 import io.bankingofthings.iot.storage.SpHelper
 import java.util.*
 
@@ -12,7 +11,7 @@ class IdRepo(spHelper: SpHelper, val makerID: String) {
             deviceID = generateID()
 
             spHelper.storeDeviceID(deviceID)
-            spHelper.setHasDeviceID(true)
+            spHelper.storeHasDeviceID(true)
         } else {
             deviceID = spHelper.getDeviceID()
         }

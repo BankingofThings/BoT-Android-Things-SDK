@@ -5,13 +5,7 @@ import android.security.keystore.KeyProperties
 import android.util.Base64
 import io.bankingofthings.iot.storage.SpHelper
 import java.security.*
-import java.security.interfaces.RSAPrivateKey
-import java.security.interfaces.RSAPublicKey
-import java.security.spec.PKCS8EncodedKeySpec
-import java.security.spec.RSAKeyGenParameterSpec
 import java.security.spec.X509EncodedKeySpec
-import javax.crypto.KeyGenerator
-import javax.crypto.SecretKey
 
 /**
  * Stores RSA public and private key on KeyStore (Android native secure location).
@@ -27,7 +21,7 @@ class KeyRepo(spHelper: SpHelper) {
     val serverPublicKey: PublicKey
 
     init {
-        if (!spHelper.getHasKeyPair()) {
+        if (!spHelper.getHasRSAKeys()) {
             KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore")
                 .apply {
                     initialize(
@@ -45,7 +39,7 @@ class KeyRepo(spHelper: SpHelper) {
                     generateKeyPair()
                 }
 
-            spHelper.setHasKeyPair(true)
+            spHelper.storeHasRSAKeys(true)
         }
 
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
