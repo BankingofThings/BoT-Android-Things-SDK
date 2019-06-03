@@ -4,6 +4,7 @@
 https://developer.android.com/things/hardware/raspberrypi
 
 2. Open Android Studio and clone the SDK (File>New>Project from Version Control>Git)
+https://github.com/BankingofThings/BoT-Android-Things-SDK.git
 
 3. After clonning make the project by clicking, Make Project (Green Hammer).
 
