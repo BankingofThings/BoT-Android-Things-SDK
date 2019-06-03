@@ -21,7 +21,7 @@ See Finn file (app/src/main/java/io.bankingofthings.iot) for more details
 If you have multi pair on, add (replace null) the alternative ID (the same ID entered in the app).
 
 ### A. Finn supports observable and callback patterns.
-- **For the callback pattern there are 3 callbacks:**
+**For the callback pattern there are 3 callbacks:**
     - Finn.StartCallback: notifies when device is paired.
     - Finn.GetActionsCallback: returns a list of ActionModels.
     - Finn.TriggerActionCallback: notifies when an action is triggered.
