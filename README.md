@@ -16,7 +16,7 @@ The last parameter, newInstall, should only be set to 'true' when the Maker ID c
 Keep in mind to set it to false after, otherwise every compilation will create a new device. 
 See Finn file (app/src/main/java/io/bankingofthings/iot) for more details
 
-5. Go to ExampleActivity.startFinnCallbackPattern() and fill in the action ID you want to trigger after the device is paired. Or add or change the code to what you want (start reading sensors, manipulate actuators, etc).
+5. Go to ExampleActivity.startFinnObservablePattern() (the same function is also available in callback pattern) and fill in the action ID you want to trigger after the device is paired. Or add or change the code to what you want (start reading sensors, manipulate actuators, etc).
 
 ### Important
 If you have multi pair on, add (replace null) the alternative ID (the same ID entered in the app).
