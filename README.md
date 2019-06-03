@@ -9,7 +9,7 @@ https://github.com/BankingofThings/BoT-Android-Things-SDK.git
 3. After clonning make the project by clicking, Make Project (Green Hammer).
 
 4. Open ExampleActivity file (app/src/main/java/io/bankingofthings/iot)
-Fill in your Maker ID and other device related date in the Finn constructor parameters (ExampleActivity.initFinn())
+Fill in your Maker ID and other device related data in the Finn constructor parameters (ExampleActivity.initFinn()).
 
 #Important
 The last parameter, newInstall, should only be set to 'true' when the Maker ID changes or a new device should be generated (for adding multiple devices on app level).
