@@ -113,6 +113,8 @@ class Finn(
 
     private val bluetoothManager: BluetoothManager
 
+    var isPaired:Boolean = false
+
     @Throws(
         MakerIDInvalidError::class,
         HostNameEmptyError::class,
@@ -213,6 +215,8 @@ class Finn(
     fun destroy() {
         stop()
 
+        isPaired = false
+
         spHelper.removeAllData()
 
         if (!qrBitmap.isRecycled) {
@@ -263,6 +267,8 @@ class Finn(
                 if (!multiPair) {
                     bluetoothManager.kill()
                 }
+
+                isPaired = true
             }
             .retryWhen { it.delay(10, TimeUnit.SECONDS) }
             .subscribeOn(Schedulers.io())
