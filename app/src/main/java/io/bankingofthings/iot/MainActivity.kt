@@ -69,7 +69,6 @@ class MainActivity : Activity() {
             "my unique ID",
             false
         )
-
     }
 
     /**
