@@ -59,53 +59,16 @@ class ExampleActivity : Activity() {
     private fun initFinn() {
         finn = Finn(
             this,
-            "e454bc81-fca0-43d4-b047-7311bdee8c57",
-            "Finn - BoT",
-            "Finn Things Device",
-            "Things",
-            "19-02-2019",
+            "<Your maker ID>",
+            "<Host name>",
+            "<Device Name>",
+            "<Bluetooth Name (display name)>",
+            "<Date of build>",
             true,
-            true,
-            "my unique ID",
+            false,
+            "<Multi pair display name>",
             false
         )
-    }
-
-    /**
-     * Starts FINN.
-     * With callback (traditional) style of coding
-     */
-    private fun startFinnCallbackPattern() {
-        finn.start(object : Finn.StartCallback {
-            override fun onDevicePaired() {
-
-                finn.getActions(object : Finn.GetActionsCallback {
-                    override fun onGetActionsResult(actionList: List<ActionModel>) {
-
-                        // Log all available actions
-                        actionList.forEach { System.out.println("ExampleActivity:startFinnCallbackPattern action: $it") }
-
-                        // Trigger 1 action
-                        finn.triggerAction(
-                            "248DF988-B811-418B-83BF-F55F5B46EEAB",
-                            null,
-                            object : Finn.TriggerActionCallback {
-                                override fun onTriggerActionComplete() {
-                                    System.out.println("ExampleActivity:startFinnCallbackPattern action triggered")
-                                }
-
-                                override fun onError(e: Throwable) {
-                                    e.printStackTrace()
-                                }
-                            })
-                    }
-
-                    override fun onError(e: Throwable) {
-                        e.printStackTrace()
-                    }
-                })
-            }
-        })
     }
 
     /**
@@ -127,6 +90,43 @@ class ExampleActivity : Activity() {
                 }
             )
             .apply { disposables.add(this) }
+    }
+
+    /**
+     * Starts FINN.
+     * With callback (traditional) style of coding
+     */
+    private fun startFinnCallbackPattern() {
+        finn.start(object : Finn.StartCallback {
+            override fun onDevicePaired() {
+
+                finn.getActions(object : Finn.GetActionsCallback {
+                    override fun onGetActionsResult(actionList: List<ActionModel>) {
+
+                        // Log all available actions
+                        actionList.forEach { System.out.println("ExampleActivity:startFinnCallbackPattern action: $it") }
+
+                        // Trigger 1 action
+                        finn.triggerAction(
+                            "<Your action ID>",
+                            null,
+                            object : Finn.TriggerActionCallback {
+                                override fun onTriggerActionComplete() {
+                                    System.out.println("ExampleActivity:startFinnCallbackPattern action triggered")
+                                }
+
+                                override fun onError(e: Throwable) {
+                                    e.printStackTrace()
+                                }
+                            })
+                    }
+
+                    override fun onError(e: Throwable) {
+                        e.printStackTrace()
+                    }
+                })
+            }
+        })
     }
 
     /**

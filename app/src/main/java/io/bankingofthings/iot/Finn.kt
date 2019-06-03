@@ -30,11 +30,18 @@ import okhttp3.internal.Internal.instance
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
-
 /**
- * Finn is a singleton and can be
+ * Finn is a singleton and can be started, stopped and destroyed.
+ * Start: check pair status, if paired activate and stop bluetooth advertising if is not a multi pair device. Otherwise keep advertising.
+ * If not paired try every 10 seconds again.
  *
- * To start Finn, just call start(startCallback) and after pairing with companion app, you can trigger actions.
+ * The initialization can throw an exception:
+ * MakerID is invalid. MakerIDInvalidError
+ * Host name empty. HostNameEmptyError
+ * Bluetooth discover name is too long. BlueToothNameTooLongError
+ * Alternative Identifier name is empty with multi pair. AlternativeIdentifierDisplayNameEmptyError
+ *
+ * To start Finn, just call start() and after pairing with companion app, you can trigger actions.
 
  * @param makerID Portal MakerID (36 characters)
  * @param hostName Manufacturer/Company name
@@ -205,7 +212,13 @@ class Finn(
      */
     fun destroy() {
         stop()
+
         spHelper.removeAllData()
+
+        if (!qrBitmap.isRecycled) {
+            qrBitmap.recycle()
+        }
+
         instance = null
     }
 
@@ -291,9 +304,9 @@ class Finn(
         ActionFrequencyTimeNotPassedError::class,
         ActionTriggerFailedError::class
     )
-    /**
-     * Trigger action.
-     */
+            /**
+             * Trigger action.
+             */
     fun triggerAction(actionID: String, alternativeID: String? = null): Completable {
         return checkActionTriggerableWorker.execute(actionID)
             .andThen(triggerActionWorker.execute(actionID, idRepo.generateID(), alternativeID))
