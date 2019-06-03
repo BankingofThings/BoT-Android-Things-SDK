@@ -36,4 +36,5 @@ If you have multi pair on, add (replace null) the alternative ID (the same ID en
     - multipair true/false
     - aid (alternative identifier id))
 
-See documents folder for the diagrams.
+### See documents folder for the diagrams.
+Class diagram - https://github.com/BankingofThings/BoT-Android-Things-SDK/blob/master/documents/classdiagram.png
