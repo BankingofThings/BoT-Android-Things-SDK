@@ -267,7 +267,7 @@ class Finn(
     }
 
     /**
-     * Returns all actions stored at CORE.
+     * Returns all actions.
      */
     fun getActions(): Single<List<ActionModel>> {
         return getActionsWorker.execute()
@@ -276,7 +276,7 @@ class Finn(
     }
 
     /**
-     * Returns all actions stored at CORE.
+     * Returns all actions.
      */
     fun getActions(callback: Finn.GetActionsCallback) {
         getActionsWorker.execute()
@@ -286,14 +286,14 @@ class Finn(
             .apply { disposables.add(this) }
     }
 
-    /**
-     * Trigger action at CORE
-     */
     @Throws(
         ActionFrequencyNotFoundError::class,
         ActionFrequencyTimeNotPassedError::class,
         ActionTriggerFailedError::class
     )
+    /**
+     * Trigger action.
+     */
     fun triggerAction(actionID: String, alternativeID: String? = null): Completable {
         return checkActionTriggerableWorker.execute(actionID)
             .andThen(triggerActionWorker.execute(actionID, idRepo.generateID(), alternativeID))
@@ -303,7 +303,7 @@ class Finn(
     }
 
     /**
-     * Trigger action at CORE
+     * Trigger action.
      */
     fun triggerAction(actionID: String, alternativeID: String? = null, callback: Finn.TriggerActionCallback) {
         checkActionTriggerableWorker.execute(actionID)
