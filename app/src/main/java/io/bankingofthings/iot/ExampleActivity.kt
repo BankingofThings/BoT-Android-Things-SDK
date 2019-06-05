@@ -80,7 +80,7 @@ class ExampleActivity : Activity() {
             .andThen(finn.getActions())
             .map { it.forEach { System.out.println("ExampleActivity:startFinnObservablePattern action: $it") } }
             .toCompletable()
-            .andThen(finn.triggerAction("248DF988-B811-418B-83BF-F55F5B46EEAB"))
+            .andThen(finn.triggerAction("<Your action ID>"))
             .subscribe(
                 {
                     System.out.println("ExampleActivity:startFinnObservablePattern action triggered")
