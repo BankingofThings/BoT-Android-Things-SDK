@@ -15,10 +15,10 @@ Fill in your Maker ID and other device related data, in the Finn constructor. Se
 The last parameter, newInstall, should only be set to 'true' when the Maker ID changes or a new device should be generated (for adding multiple devices on app level).
 Keep in mind to set it to false afterwards, otherwise every compilation will create a new device. 
 
-5. Go to ExampleActivity.startFinnObservablePattern() (the same function is also available in callback pattern) and fill in the action ID you want to trigger, after the device is paired. Instead of trigger an actin, you can also add your custom code here. (start reading sensors, manipulate actuators, etc).
+5. Go to ExampleActivity.startFinnObservablePattern() (the same function is also available in callback pattern) and fill in the action ID you want to trigger, after the device is paired. Instead of trigger an action, you can also add your custom code here. (start reading sensors, manipulate actuators, etc).
 
 ### Important
-If you have multi pair on, add (replace null) the alternative ID (the same ID entered in the app).
+If you have multi pair on, add (replace null) the alternative ID (the same ID entered in the app) as the second paramter for triggering the action.
 
 ### A. Finn supports observable and callback patterns.
 - **For the callback pattern there are 3 callbacks:**
