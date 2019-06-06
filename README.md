@@ -8,15 +8,14 @@ https://github.com/BankingofThings/BoT-Android-Things-SDK.git
 
 3. After clonning make the project by clicking, Make Project (Green Hammer).
 
-4. Open ExampleActivity file (app/src/main/java/io/bankingofthings/iot)
-Fill in your Maker ID and other device related data in the Finn constructor parameters (ExampleActivity.initFinn()).
+4. Open ExampleActivity class (app/src/main/java/io/bankingofthings/iot) and go to ExampleActivity.initFinn() method.
+Fill in your Maker ID and other device related data, in the Finn constructor. See Finn class (app/src/main/java/io/bankingofthings/iot) for more details.
 
 ### Important
 The last parameter, newInstall, should only be set to 'true' when the Maker ID changes or a new device should be generated (for adding multiple devices on app level).
-Keep in mind to set it to false after, otherwise every compilation will create a new device. 
-See Finn file (app/src/main/java/io/bankingofthings/iot) for more details
+Keep in mind to set it to false afterwards, otherwise every compilation will create a new device. 
 
-5. Go to ExampleActivity.startFinnObservablePattern() (the same function is also available in callback pattern) and fill in the action ID you want to trigger after the device is paired. Or add or change the code to what you want (start reading sensors, manipulate actuators, etc).
+5. Go to ExampleActivity.startFinnObservablePattern() (the same function is also available in callback pattern) and fill in the action ID you want to trigger, after the device is paired. Instead of trigger an actin, you can also add your custom code here. (start reading sensors, manipulate actuators, etc).
 
 ### Important
 If you have multi pair on, add (replace null) the alternative ID (the same ID entered in the app).
