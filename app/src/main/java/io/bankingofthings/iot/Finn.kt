@@ -6,6 +6,7 @@ import android.content.Context.WIFI_SERVICE
 import android.graphics.Bitmap
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
+import android.os.Environment
 import com.google.android.things.bluetooth.BluetoothPairingCallback
 import com.google.gson.Gson
 import io.bankingofthings.iot.bluetooth.BluetoothManager
@@ -27,6 +28,8 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import okhttp3.internal.Internal.instance
+import java.io.File
+import java.io.FileOutputStream
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
@@ -158,7 +161,7 @@ class Finn(
         idRepo = IdRepo(spHelper, makerID)
         deviceRepo = DeviceRepo(context, keyRepo, idRepo, hostName, deviceName, buildDate, hasWifi, multiPair, aid)
 
-        qrBitmap = QRUtil.encodeAsBitmap(Gson().toJson(deviceRepo.deviceModel))
+        qrBitmap = QRUtil.create(deviceRepo.deviceModel)
 
         checkDevicePairedWorker = CheckDevicePairedWorker(apiHelper, keyRepo, idRepo)
         activateDeviceWorker = ActivateDeviceWorker(apiHelper, keyRepo, idRepo)
