@@ -23,7 +23,7 @@
             android:networkSecurityConfig="@xml/network_security_config">
         <uses-library android:name="com.google.android.things" />
 
-        <activity android:name=".MainActivity">
+        <activity android:name=".ExampleActivity">
             <!-- Launch activity as default from Android Studio -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

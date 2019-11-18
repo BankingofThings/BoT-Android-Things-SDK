@@ -29,11 +29,18 @@ import io.reactivex.schedulers.Schedulers
 import retrofit2.adapter.rxjava2.HttpException
 import java.util.concurrent.TimeUnit
 
-
 /**
- * Finn is a singleton and can be
+ * Finn is a singleton and can be started, stopped and destroyed.
+ * Start: check pair status, if paired activate and stop bluetooth advertising if is not a multi pair device. Otherwise keep advertising.
+ * If not paired try every 10 seconds again.
  *
- * To start Finn, just call start(startCallback) and after pairing with companion app, you can trigger actions.
+ * The initialization can throw an exception:
+ * MakerID is invalid. MakerIDInvalidError
+ * Host name empty. HostNameEmptyError
+ * Bluetooth discover name is too long. BlueToothNameTooLongError
+ * Alternative Identifier name is empty with multi pair. AlternativeIdentifierDisplayNameEmptyError
+ *
+ * To start Finn, just call start() and after pairing with companion app, you can trigger actions.
 
  * @param makerID Portal MakerID (36 characters)
  * @param hostName Manufacturer/Company name
@@ -106,6 +113,8 @@ class Finn(
     private val checkAndExecuteOfflineActionsWorker: CheckAndExecuteOfflineActionsWorker
 
     private val bluetoothManager: BluetoothManager
+
+    var isPaired:Boolean = false
 
     @Throws(
         MakerIDInvalidError::class,
@@ -211,6 +220,22 @@ class Finn(
     }
 
     /**
+     * Cleanup: usefull when testing multiple makerID's.
+     * Kills running api calls
+     * Stops bluetooth
+     * Removes all data; deviceID, keys and other locally stored data.
+     */
+    fun destroy() {
+        stop()
+
+        isPaired = false
+
+        spHelper.removeAllData()
+
+        instance = null
+    }
+
+    /**
      * @see start():Completable
      */
     fun start(startCallback: StartCallback) {
@@ -257,6 +282,8 @@ class Finn(
                 } else {
                     bluetoothManager.kill()
                 }
+
+                isPaired = true
             }
             .retryWhen { it.delay(10, TimeUnit.SECONDS) }
             .subscribeOn(Schedulers.io())

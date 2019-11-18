@@ -32,7 +32,7 @@ import io.reactivex.disposables.CompositeDisposable
  *
  * ./adb connect Android.local
  */
-class MainActivity : Activity() {
+class ExampleActivity : Activity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var finn: Finn
     // Used with observables
@@ -59,16 +59,37 @@ class MainActivity : Activity() {
     private fun initFinn() {
         finn = Finn(
             this,
-            "e454bc81-fca0-43d4-b047-7311bdee8c57",
-            "Finn - BoT",
-            "Finn Things Device",
-            "Things",
-            "19-02-2019",
+            "<Your maker ID>",
+            "<Host name>",
+            "<Device Name>",
+            "<Bluetooth Name (display name)>",
+            "<Date of build>",
             true,
-            true,
-            "my unique ID",
+            false,
+            "<Multi pair display name>",
             false
         )
+    }
+
+    /**
+     * Starts FINN.
+     * With observable style of coding
+     */
+    private fun startFinnObservablePattern() {
+        finn.start()
+            .andThen(finn.getActions())
+            .map { it.forEach { System.out.println("ExampleActivity:startFinnObservablePattern action: $it") } }
+            .toCompletable()
+            .andThen(finn.triggerAction("<Your action ID>"))
+            .subscribe(
+                {
+                    System.out.println("ExampleActivity:startFinnObservablePattern action triggered")
+                },
+                {
+                    it.printStackTrace()
+                }
+            )
+            .apply { disposables.add(this) }
     }
 
     /**
@@ -83,15 +104,15 @@ class MainActivity : Activity() {
                     override fun onGetActionsResult(actionList: List<ActionModel>) {
 
                         // Log all available actions
-                        actionList.forEach { System.out.println("MainActivity:startFinnCallbackPattern action: $it") }
+                        actionList.forEach { System.out.println("ExampleActivity:startFinnCallbackPattern action: $it") }
 
                         // Trigger 1 action
                         finn.triggerAction(
-                            "248DF988-B811-418B-83BF-F55F5B46EEAB",
+                            "<Your action ID>",
                             null,
                             object : Finn.TriggerActionCallback {
                                 override fun onTriggerActionComplete() {
-                                    System.out.println("MainActivity:startFinnCallbackPattern action triggered")
+                                    System.out.println("ExampleActivity:startFinnCallbackPattern action triggered")
                                 }
 
                                 override fun onError(e: Throwable) {
@@ -106,27 +127,6 @@ class MainActivity : Activity() {
                 })
             }
         })
-    }
-
-    /**
-     * Starts FINN.
-     * With observable style of coding
-     */
-    private fun startFinnObservablePattern() {
-        finn.start()
-            .andThen(finn.getActions())
-            .map { it.forEach { System.out.println("MainActivity:startFinnObservablePattern action: $it") } }
-            .toCompletable()
-            .andThen(finn.triggerAction("248DF988-B811-418B-83BF-F55F5B46EEAB"))
-            .subscribe(
-                {
-                    System.out.println("MainActivity:startFinnObservablePattern action triggered")
-                },
-                {
-                    it.printStackTrace()
-                }
-            )
-            .apply { disposables.add(this) }
     }
 
     /**
