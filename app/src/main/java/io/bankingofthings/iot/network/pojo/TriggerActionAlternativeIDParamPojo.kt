@@ -5,5 +5,8 @@ package io.bankingofthings.iot.network.pojo
  * Copyright @ 2018 BankingOfThings.io. All Right reserved.
  */
 data class TriggerActionAlternativeIDParamPojo(val bot: Bot) {
-    data class Bot(val deviceID: String, val actionID: String, val alternativeID:String, val value: String)
+    data class Bot(val deviceID: String,
+                   val actionID: String,
+                   val alternativeID:String,
+                   val value: String)
 }

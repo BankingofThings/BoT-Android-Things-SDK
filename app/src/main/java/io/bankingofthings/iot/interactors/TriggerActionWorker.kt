@@ -31,6 +31,7 @@ class TriggerActionWorker(
      */
     @Throws(ActionTriggerFailedError::class)
     fun execute(actionID: String, queueID: String, alternativeID: String? = null): Completable {
+        System.out.println("TriggerActionWorker:execute actionID = ${actionID} ${alternativeID}")
         val token = JWTUtil.create(
             // With multi pair alternativeID should not be null
             if (alternativeID != null) {

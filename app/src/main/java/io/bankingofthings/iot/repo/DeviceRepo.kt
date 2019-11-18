@@ -70,8 +70,7 @@ class DeviceRepo(
             if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) "little" else "big",
             (memoryInfo.availMem).toString() + "/" + (memoryInfo.totalMem).toString(),
             networkModel.network,
-            networkModel.ip,
-            hasWifi
+            networkModel.ip
         )
     }
 
