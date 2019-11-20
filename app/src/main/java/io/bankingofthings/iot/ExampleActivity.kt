@@ -6,6 +6,7 @@ import android.os.Bundle
 import io.bankingofthings.iot.databinding.ActivityMainBinding
 import io.bankingofthings.iot.model.domain.ActionModel
 import io.reactivex.disposables.CompositeDisposable
+import java.lang.Exception
 
 
 /**
@@ -50,7 +51,7 @@ class ExampleActivity : Activity() {
     }
 
     private fun showQRbitmapOnDisplay() {
-        binding.qrHolder.setImageBitmap(finn.qrBitmap)
+        binding.qrHolder.setImageBitmap(finn.getQrBitmap())
     }
 
     /**
@@ -127,6 +128,11 @@ class ExampleActivity : Activity() {
                 })
             }
         })
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        finn.stop()
     }
 
     /**
