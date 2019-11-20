@@ -1,5 +1,5 @@
 package io.bankingofthings.iot.error
 
-class ActionTriggerFailedAlternativeIdRequired : Throwable() {
+class ActionTriggerFailedAlternativeIdRequired : Exception() {
 
 }

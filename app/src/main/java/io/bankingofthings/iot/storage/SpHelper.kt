@@ -61,35 +61,27 @@ class SpHelper(private val sharedPreferences: SharedPreferences) {
      * @param time time of execution (Calendar UTC milliseconds from the epoch). -1 is returned if none exists
      */
     fun storeActionLastExecutionTime(actionID: String, time: Long) =
-        sharedPreferences.edit().putLong(
-            SpNames.ACTION_LAST_EXECUTION_TIME.name + actionID,
-            time
-        ).apply()
+        sharedPreferences.edit().putLong(SpNames.ACTION_LAST_EXECUTION_TIME.name + actionID, time).apply()
 
     /**
      * Store offline triggered action
      */
     @SuppressLint("ApplySharedPref")
-    fun storeAction(value: String) {
-        System.out.println("SpHelper:storeAction")
-        sharedPreferences.getStringSet(SpNames.ACTION.name, setOf()).apply {
-            System.out.println("SpHelper:storeAction ${this!!.size}")
-
-            val newList = this.toMutableSet()
-
-            val result = newList.add(value)
-
-            System.out.println("SpHelper:storeAction result = ${result}")
-
-            sharedPreferences.edit().putStringSet(SpNames.ACTION.name, newList).commit()
-        }
+    fun storeOfflineAction(value: String) {
+        sharedPreferences.getStringSet(SpNames.ACTION.name, setOf())
+            .apply {
+                toMutableSet().let { mutableList ->
+                    if (mutableList.add(value)) {
+                        sharedPreferences.edit().putStringSet(SpNames.ACTION.name, mutableList).commit()
+                    }
+                }
+            }
     }
 
     /**
-     * Get first, in the list, offline triggered action
+     * Returns list of offline actions
      */
-    fun getActions(): List<String>? {
-        System.out.println("SpHelper:getAction")
+    fun getOfflineActions(): List<String>? {
         return sharedPreferences.getStringSet(SpNames.ACTION.name, setOf())?.toList()
     }
 
@@ -97,8 +89,7 @@ class SpHelper(private val sharedPreferences: SharedPreferences) {
      * Remove value, result of action is ignored.
      */
     @SuppressLint("ApplySharedPref")
-    fun removeActions() {
-        System.out.println("SpHelper:removeActions")
+    fun removeOfflineActions() {
         sharedPreferences.edit().remove(SpNames.ACTION.name).commit()
     }
 

@@ -10,7 +10,7 @@ import io.reactivex.Completable
 class StoreOfflineTriggeredActionWorker(private val spHelper: SpHelper) {
     fun put(actionID: String, queueID: String, alternativeID: String?): Completable {
         return Completable.fromCallable {
-            spHelper.storeAction(ActionUtil.createToJson(actionID, queueID, alternativeID))
+            spHelper.storeOfflineAction(ActionUtil.createToJson(actionID, queueID, alternativeID))
         }
     }
 }

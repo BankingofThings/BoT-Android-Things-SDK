@@ -4,3 +4,4 @@ app/.externalNativeBuild
 /.gradle
 /.scannerWork
 .idea
+local.properties

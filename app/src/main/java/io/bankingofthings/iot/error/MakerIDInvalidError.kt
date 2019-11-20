@@ -1,3 +1,3 @@
 package io.bankingofthings.iot.error
 
-class MakerIDInvalidError : Throwable()
+class MakerIDInvalidError : Exception()

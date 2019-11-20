@@ -6,13 +6,12 @@ import android.content.Context.WIFI_SERVICE
 import android.graphics.Bitmap
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
-import com.google.gson.Gson
 import io.bankingofthings.iot.bluetooth.BluetoothManager
 import io.bankingofthings.iot.error.*
 import io.bankingofthings.iot.interactors.*
+import io.bankingofthings.iot.manager.NetworkManager
 import io.bankingofthings.iot.model.domain.ActionModel
 import io.bankingofthings.iot.network.ApiHelper
-import io.bankingofthings.iot.manager.NetworkManager
 import io.bankingofthings.iot.network.TLSManager
 import io.bankingofthings.iot.network.pojo.BotDeviceSsidPojo
 import io.bankingofthings.iot.repo.DeviceRepo
@@ -20,13 +19,13 @@ import io.bankingofthings.iot.repo.IdRepo
 import io.bankingofthings.iot.repo.KeyRepo
 import io.bankingofthings.iot.repo.QrRepo
 import io.bankingofthings.iot.storage.SpHelper
-import io.bankingofthings.iot.utils.QRUtil
 import io.reactivex.Completable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import retrofit2.adapter.rxjava2.HttpException
+import java.lang.Exception
 import java.util.concurrent.TimeUnit
 
 /**
@@ -246,7 +245,7 @@ class Finn(
 
     /**
      * Pair device
-     * if success > getFirst actions and store, and then activate device
+     * if success > get actions and store, and then activate device
      * else > start bluetooth advertising and retry after 10 seconds
      *
      */
@@ -291,14 +290,13 @@ class Finn(
     }
 
     /**
-     * Stop
-     * Kill running api calls
-     * Stops bluetooth
+     * Stops network processes
+     * Stops rx streams (threads)
+     * Stops bluetooth broadcasting
+     * Clears bitmap cache
      */
     fun stop() {
-        System.out.println("Finn:stop")
         networkManager.stop()
-
         disposables.dispose()
         bluetoothManager.kill()
         qrRepo.destroyBitmap()
@@ -342,14 +340,8 @@ class Finn(
             return if (networkManager.hasNetworkConnection()) {
                 createCompositeSendAction(actionID, alternativeID)
                     .onErrorResumeNext {
-                        when (it::class) {
-                            HttpException::class -> {
-                                if ((it as HttpException).code() == 400) {
-                                    Completable.error(ActionNotActivatedError())
-                                } else {
-                                    Completable.error(it)
-                                }
-                            }
+                        when {
+                            it is HttpException && it.code() == 400 -> Completable.error(ActionNotActivatedError())
                             else -> Completable.error(it)
                         }
                     }
@@ -371,7 +363,7 @@ class Finn(
     fun triggerAction(
         actionID: String,
         alternativeID: String? = null,
-        callback: TriggerActionCallback
+        callback: Finn.TriggerActionCallback
     ) {
         if (multiPair && alternativeID == null) {
             throw ActionTriggerFailedAlternativeIdRequired()
@@ -397,6 +389,7 @@ class Finn(
         return checkActionTriggerableWorker.execute(actionID)
             .andThen(triggerActionWorker.execute(actionID, idRepo.generateID(), alternativeID))
             .andThen(storeActionTriggeredWorker.execute(actionID))
+            .andThen(checkAndExecuteOfflineActionsWorker.execute())
     }
 
     private fun createCompositeTriggerOfflineAction(actionID: String, alternativeID: String?): Completable {

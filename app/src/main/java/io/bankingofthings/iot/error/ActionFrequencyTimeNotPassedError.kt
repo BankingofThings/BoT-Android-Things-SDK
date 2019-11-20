@@ -1,3 +1,3 @@
 package io.bankingofthings.iot.error
 
-class ActionFrequencyTimeNotPassedError(override val message:String) : Throwable()
+class ActionFrequencyTimeNotPassedError(override val message: String) : Exception()

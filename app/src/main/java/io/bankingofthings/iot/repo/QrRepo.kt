@@ -7,11 +7,13 @@ import io.bankingofthings.iot.utils.QRUtil
 import java.io.File
 import java.io.FileOutputStream
 
+/**
+ * Manages QR bitmap caching and storage.
+ */
 class QrRepo(private val spHelper:SpHelper, private val deviceRepo: DeviceRepo) {
     val qrBitmap: Bitmap = QRUtil.createBitmap(deviceRepo.deviceModel)
 
     init {
-        // Do only for every new device
         if (!spHelper.getHasStoredQrImage()) {
             storeBitmapToSdCard()
             spHelper.setHasStoredQrImage(true)

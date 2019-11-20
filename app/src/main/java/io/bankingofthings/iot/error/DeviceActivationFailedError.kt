@@ -1,3 +1,3 @@
 package io.bankingofthings.iot.error
 
-class DeviceActivationFailedError : Throwable()
+class DeviceActivationFailedError : Exception()
