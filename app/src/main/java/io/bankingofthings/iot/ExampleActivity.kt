@@ -6,32 +6,12 @@ import android.os.Bundle
 import io.bankingofthings.iot.databinding.ActivityMainBinding
 import io.bankingofthings.iot.model.domain.ActionModel
 import io.reactivex.disposables.CompositeDisposable
-import java.lang.Exception
 
 
 /**
- * Skeleton of an Android Things activity.
+ * FINN example class for simple implementation
  *
- * Android Things peripheral APIs are accessible through the class
- * PeripheralManagerService. For example, the snippet below will open a GPIO pin and
- * set it to HIGH:
- *
- * connected to Android.local:5555
- *
- * <pre>{@code
- * val service = PeripheralManagerService()
- * val mLedGpio = service.openGpio("BCM6")
- * mLedGpio.setDirection(Gpio.DIRECTION_OUT_INITIALLY_LOW)
- * mLedGpio.value = true
- * }</pre>
- * <p>
- * For more complex peripherals, look for an existing user-space driver, or implement one if none
- * is available.
- *
- * @see <a href="https://github.com/androidthings/contrib-drivers#readme">https://github.com/androidthings/contrib-drivers#readme</a>
- * val keyPairBIG = Keys.keyPairFor(SignatureAlgorithm.RS256)
- *
- * ./adb connect Android.local
+ * ./adb connect Android.local:5555
  */
 class ExampleActivity : Activity() {
     private lateinit var binding: ActivityMainBinding
