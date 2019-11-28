@@ -5,6 +5,7 @@ import io.bankingofthings.iot.error.ActionFrequencyTimeNotPassedError
 import io.bankingofthings.iot.storage.SpHelper
 import io.bankingofthings.iot.utils.ActionUtil
 import io.reactivex.Completable
+import java.util.*
 
 /**
  * Check if actions last execution time is passed.
@@ -24,7 +25,7 @@ class CheckActionTriggerableWorker(private val spHelper: SpHelper) {
 
                 // Time not passed
                 if (time != -1L && !ActionUtil.checkFrequencyTimePassed(time, frequency)) {
-                    throw ActionFrequencyTimeNotPassedError()
+                    throw ActionFrequencyTimeNotPassedError("$frequency ${(Calendar.getInstance().timeInMillis - time) / 1000} seconds elapsed")
                 }
 
                 // No errors, completed

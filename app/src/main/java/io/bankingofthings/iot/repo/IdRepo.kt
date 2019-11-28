@@ -15,6 +15,8 @@ class IdRepo(spHelper: SpHelper, val makerID: String) {
         } else {
             deviceID = spHelper.getDeviceID()
         }
+        
+        System.out.println("IdRepo: deviceID = ${deviceID}")
     }
 
     /**

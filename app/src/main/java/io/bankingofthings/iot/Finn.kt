@@ -6,11 +6,10 @@ import android.content.Context.WIFI_SERVICE
 import android.graphics.Bitmap
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
-import com.google.android.things.bluetooth.BluetoothPairingCallback
-import com.google.gson.Gson
 import io.bankingofthings.iot.bluetooth.BluetoothManager
 import io.bankingofthings.iot.error.*
 import io.bankingofthings.iot.interactors.*
+import io.bankingofthings.iot.manager.NetworkManager
 import io.bankingofthings.iot.model.domain.ActionModel
 import io.bankingofthings.iot.network.ApiHelper
 import io.bankingofthings.iot.network.TLSManager
@@ -18,16 +17,14 @@ import io.bankingofthings.iot.network.pojo.BotDeviceSsidPojo
 import io.bankingofthings.iot.repo.DeviceRepo
 import io.bankingofthings.iot.repo.IdRepo
 import io.bankingofthings.iot.repo.KeyRepo
+import io.bankingofthings.iot.repo.QrRepo
 import io.bankingofthings.iot.storage.SpHelper
-import io.bankingofthings.iot.utils.QRUtil
 import io.reactivex.Completable
-import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-import okhttp3.internal.Internal.instance
-import java.net.UnknownHostException
+import retrofit2.adapter.rxjava2.HttpException
 import java.util.concurrent.TimeUnit
 
 /**
@@ -99,9 +96,9 @@ class Finn(
 
     private val keyRepo: KeyRepo
     private val idRepo: IdRepo
+    private val qrRepo: QrRepo
     private val deviceRepo: DeviceRepo
-
-    val qrBitmap: Bitmap
+    private val networkManager = NetworkManager(context)
 
     private val triggerActionWorker: TriggerActionWorker
     private val checkDevicePairedWorker: CheckDevicePairedWorker
@@ -110,6 +107,8 @@ class Finn(
     private val checkActionTriggerableWorker: CheckActionTriggerableWorker
     private val storeActionFrequencyWorker: StoreActionFrequencyWorker
     private val storeActionTriggeredWorker: StoreActionTriggeredWorker
+    private val storeOfflineTriggeredActionWorker: StoreOfflineTriggeredActionWorker
+    private val checkAndExecuteOfflineActionsWorker: CheckAndExecuteOfflineActionsWorker
 
     private val bluetoothManager: BluetoothManager
 
@@ -156,9 +155,19 @@ class Finn(
 
         keyRepo = KeyRepo(spHelper)
         idRepo = IdRepo(spHelper, makerID)
-        deviceRepo = DeviceRepo(context, keyRepo, idRepo, hostName, deviceName, buildDate, hasWifi, multiPair, aid)
+        deviceRepo = DeviceRepo(
+            context,
+            keyRepo,
+            idRepo,
+            hostName,
+            deviceName,
+            buildDate,
+            hasWifi,
+            multiPair,
+            aid
+        )
 
-        qrBitmap = QRUtil.encodeAsBitmap(Gson().toJson(deviceRepo.deviceModel))
+        qrRepo = QrRepo(spHelper, deviceRepo)
 
         checkDevicePairedWorker = CheckDevicePairedWorker(apiHelper, keyRepo, idRepo)
         activateDeviceWorker = ActivateDeviceWorker(apiHelper, keyRepo, idRepo)
@@ -167,6 +176,8 @@ class Finn(
         checkActionTriggerableWorker = CheckActionTriggerableWorker(spHelper)
         triggerActionWorker = TriggerActionWorker(apiHelper, keyRepo, idRepo)
         storeActionTriggeredWorker = StoreActionTriggeredWorker(spHelper)
+        storeOfflineTriggeredActionWorker = StoreOfflineTriggeredActionWorker(spHelper)
+        checkAndExecuteOfflineActionsWorker = CheckAndExecuteOfflineActionsWorker(spHelper, triggerActionWorker)
 
         bluetoothManager = BluetoothManager(
             context,
@@ -219,10 +230,6 @@ class Finn(
 
         spHelper.removeAllData()
 
-        if (!qrBitmap.isRecycled) {
-            qrBitmap.recycle()
-        }
-
         instance = null
     }
 
@@ -242,6 +249,8 @@ class Finn(
      *
      */
     fun start(): Completable {
+        networkManager.start()
+
         return checkDevicePairedWorker.execute()
             .flatMapCompletable { isPaired ->
                 if (isPaired) {
@@ -253,18 +262,22 @@ class Finn(
                 }
             }
             .doOnError {
-                it.printStackTrace()
-
                 when (it::class) {
                     DevicePairingFailed::class -> {
+                        System.out.println("Finn:start device NOT paired yet")
                         if (!bluetoothManager.started) {
                             bluetoothManager.start()
                         }
                     }
+                    else -> it.printStackTrace()
                 }
             }
             .doOnComplete {
-                if (!multiPair) {
+                if (multiPair) {
+                    if (!bluetoothManager.started) {
+                        bluetoothManager.start()
+                    }
+                } else {
                     bluetoothManager.kill()
                 }
 
@@ -276,13 +289,16 @@ class Finn(
     }
 
     /**
-     * Stop
-     * Kill running api calls
-     * Stops bluetooth
+     * Stops network processes
+     * Stops rx streams (threads)
+     * Stops bluetooth broadcasting
+     * Clears bitmap cache
      */
     fun stop() {
+        networkManager.stop()
         disposables.dispose()
         bluetoothManager.kill()
+        qrRepo.destroyBitmap()
     }
 
     /**
@@ -305,32 +321,83 @@ class Finn(
             .apply { disposables.add(this) }
     }
 
-    @Throws(
-        ActionFrequencyNotFoundError::class,
-        ActionFrequencyTimeNotPassedError::class,
-        ActionTriggerFailedError::class
-    )
-            /**
-             * Trigger action.
-             */
-    fun triggerAction(actionID: String, alternativeID: String? = null): Completable {
-        return checkActionTriggerableWorker.execute(actionID)
-            .andThen(triggerActionWorker.execute(actionID, idRepo.generateID(), alternativeID))
-            .andThen(storeActionTriggeredWorker.execute(actionID))
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-    }
-
     /**
      * Trigger action.
      */
-    fun triggerAction(actionID: String, alternativeID: String? = null, callback: Finn.TriggerActionCallback) {
-        checkActionTriggerableWorker.execute(actionID)
+    @Throws(
+        ActionFrequencyNotFoundError::class,
+        ActionFrequencyTimeNotPassedError::class,
+        ActionTriggerFailedError::class,
+        ActionTriggerFailedAlternativeIdRequired::class,
+        ActionNotActivatedError::class
+    )
+    fun triggerAction(actionID: String, alternativeID: String? = null): Completable {
+        if (multiPair && alternativeID == null) {
+            throw ActionTriggerFailedAlternativeIdRequired()
+        } else {
+
+            return if (networkManager.hasNetworkConnection()) {
+                createCompositeSendAction(actionID, alternativeID)
+                    .onErrorResumeNext {
+                        when {
+                            it is HttpException && it.code() == 400 -> Completable.error(ActionNotActivatedError())
+                            else -> Completable.error(it)
+                        }
+                    }
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+
+            } else {
+                createCompositeTriggerOfflineAction(actionID, alternativeID)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+            }
+        }
+    }
+
+    /**
+     * Trigger action, for callbacks
+     */
+    @Throws(ActionTriggerFailedAlternativeIdRequired::class)
+    fun triggerAction(
+        actionID: String,
+        alternativeID: String? = null,
+        callback: Finn.TriggerActionCallback
+    ) {
+        if (multiPair && alternativeID == null) {
+            throw ActionTriggerFailedAlternativeIdRequired()
+        } else {
+            if (networkManager.hasNetworkConnection()) {
+                createCompositeSendAction(actionID, alternativeID)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(callback::onTriggerActionComplete, callback::onError)
+                    .apply { disposables.add(this) }
+
+            } else {
+                createCompositeTriggerOfflineAction(actionID, alternativeID)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(callback::onTriggerActionComplete, callback::onError)
+                    .apply { disposables.add(this) }
+            }
+        }
+    }
+
+    private fun createCompositeSendAction(actionID: String, alternativeID: String?): Completable {
+        return checkActionTriggerableWorker.execute(actionID)
             .andThen(triggerActionWorker.execute(actionID, idRepo.generateID(), alternativeID))
             .andThen(storeActionTriggeredWorker.execute(actionID))
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(callback::onTriggerActionComplete, callback::onError)
-            .apply { disposables.add(this) }
+            .andThen(checkAndExecuteOfflineActionsWorker.execute())
+    }
+
+    private fun createCompositeTriggerOfflineAction(actionID: String, alternativeID: String?): Completable {
+        return checkActionTriggerableWorker.execute(actionID)
+            .andThen(storeOfflineTriggeredActionWorker.execute(actionID, idRepo.generateID(), alternativeID))
+            .andThen(storeActionTriggeredWorker.execute(actionID))
+    }
+
+    fun getQrBitmap(): Bitmap {
+        return qrRepo.qrBitmap
     }
 }

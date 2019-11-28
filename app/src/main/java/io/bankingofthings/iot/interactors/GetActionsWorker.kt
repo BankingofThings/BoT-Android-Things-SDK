@@ -30,7 +30,16 @@ class GetActionsWorker(private val apiHelper: ApiHelper, private val keyRepo: Ke
                     .body
             }
             .map { it.get("bot", String::class.java) }
-            .map { Gson().fromJson<List<ActionModel>>(it, object : TypeToken<List<ActionModel>>() {}.type) }
+            .map {
+                if (it.isNotEmpty()) {
+                    Gson().fromJson<List<ActionModel>>(it, object : TypeToken<List<ActionModel>>() {}.type)
+                } else {
+                    listOf()
+                }
+            }
+            .doAfterSuccess {
+                it.forEach { System.out.println("GetActionsWorker:execute $it") }
+            }
     }
 
 }

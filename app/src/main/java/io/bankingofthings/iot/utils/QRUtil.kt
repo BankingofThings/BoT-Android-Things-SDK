@@ -2,11 +2,20 @@ package io.bankingofthings.iot.utils
 
 import android.graphics.Bitmap
 import android.graphics.Color
+import com.google.gson.Gson
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
+import io.bankingofthings.iot.model.domain.DeviceModel
 
 object QRUtil {
+    /**
+     * Creates qr code, stores it as jpg on sdcard and returns bitmap.
+     */
+    fun createBitmap(deviceModel: DeviceModel): Bitmap {
+        return encodeAsBitmap(Gson().toJson(deviceModel))
+    }
+
     /**
      * TODO catch writer exception while encoding?
      */

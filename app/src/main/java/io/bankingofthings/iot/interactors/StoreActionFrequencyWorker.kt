@@ -14,7 +14,7 @@ class StoreActionFrequencyWorker(private val spHelper: SpHelper) {
                 if (it.actionID != null && it.frequency != null) {
                     spHelper.storeActionFrequency(it.actionID, it.frequency)
                 } else {
-                    System.out.println("StoreActionFrequencyWorker:execute corrupt action ${it.actionID} - ${it.frequency}")
+                    System.out.println("StoreActionFrequencyWorker:put corrupt action ${it.actionID} - ${it.frequency}")
                 }
             }
         }

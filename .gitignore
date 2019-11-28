@@ -1,6 +1,7 @@
-app/build
-/.gradle
 .DS_Store
-/app/.externalNativeBuild
+app/build
+app/.externalNativeBuild
+/.gradle
 /.scannerWork
 .idea
+local.properties

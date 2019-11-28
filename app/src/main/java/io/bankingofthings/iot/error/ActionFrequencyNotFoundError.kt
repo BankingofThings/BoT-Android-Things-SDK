@@ -1,3 +1,3 @@
 package io.bankingofthings.iot.error
 
-class ActionFrequencyNotFoundError : Throwable()
+class ActionFrequencyNotFoundError : Exception()

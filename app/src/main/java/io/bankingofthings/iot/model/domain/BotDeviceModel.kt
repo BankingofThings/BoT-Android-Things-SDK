@@ -10,6 +10,5 @@ data class BotDeviceModel(
     val endianness: String,
     val totalMemory: String,
     val network: String? = null,
-    val ip: String? = null,
-    val hasWifi: Boolean = false
+    val ip: String? = null
 )
