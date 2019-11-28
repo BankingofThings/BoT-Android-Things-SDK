@@ -17,14 +17,14 @@ android {
     buildTypes {
         release {
             debuggable false
-            buildConfigField "String", "BOT_HOST", '"api.bankingofthings.io"'
-            buildConfigField "String", "BASE_URL", '"https://api.bankingofthings.io/bot_iot/"'
+            buildConfigField "String", "BOT_HOST", '"iot.bankingofthings.io"'
+            buildConfigField "String", "BASE_URL", '"https://api.bankingofthings.io/"'
             buildConfigField "String", "BOT_FINGERPRINT", '"NzY6RTY6QjY6REY6NkQ6M0I6NEQ6MkQ6NDg6RDE6QjY6MzI6QUQ6RDY6OEU6ODA6NTM6M0Y6NUY6ODg="'
         }
         debug {
             debuggable true
-            buildConfigField "String", "BOT_HOST", '"api.bankingofthings.io"'
-            buildConfigField "String", "BASE_URL", '"https://api.bankingofthings.io/bot_iot/"'
+            buildConfigField "String", "BOT_HOST", '"iot.bankingofthings.io"'
+            buildConfigField "String", "BASE_URL", '"https://api.bankingofthings.io/"'
             buildConfigField "String", "BOT_FINGERPRINT", '"NzY6RTY6QjY6REY6NkQ6M0I6NEQ6MkQ6NDg6RDE6QjY6MzI6QUQ6RDY6OEU6ODA6NTM6M0Y6NUY6ODg="'
         }
     }
