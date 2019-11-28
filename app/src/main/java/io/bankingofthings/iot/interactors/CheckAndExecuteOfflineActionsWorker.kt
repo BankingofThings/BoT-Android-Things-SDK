@@ -1,6 +1,5 @@
 package io.bankingofthings.iot.interactors
 
-import io.bankingofthings.iot.error.NoActionsFoundError
 import io.bankingofthings.iot.storage.SpHelper
 import io.bankingofthings.iot.utils.ActionUtil
 import io.reactivex.Completable
@@ -14,7 +13,7 @@ class CheckAndExecuteOfflineActionsWorker(
      * Recursive, trigger one offline action at CORE and then check until none is left.
      */
     fun execute(): Completable {
-        return spHelper.getOfflineActions()?.let { offlineActions ->
+        return spHelper.getOfflineActions().let { offlineActions ->
             Single.just(offlineActions)
                 .flatMapCompletable { actions ->
                     Completable
@@ -32,6 +31,6 @@ class CheckAndExecuteOfflineActionsWorker(
                         )
                         .andThen { spHelper.removeOfflineActions() }
                 }
-        } ?: throw NoActionsFoundError()
+        }
     }
 }

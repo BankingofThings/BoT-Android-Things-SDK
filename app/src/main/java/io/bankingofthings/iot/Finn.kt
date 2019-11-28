@@ -25,7 +25,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import retrofit2.adapter.rxjava2.HttpException
-import java.lang.Exception
 import java.util.concurrent.TimeUnit
 
 /**
@@ -394,7 +393,7 @@ class Finn(
 
     private fun createCompositeTriggerOfflineAction(actionID: String, alternativeID: String?): Completable {
         return checkActionTriggerableWorker.execute(actionID)
-            .andThen(storeOfflineTriggeredActionWorker.put(actionID, idRepo.generateID(), alternativeID))
+            .andThen(storeOfflineTriggeredActionWorker.execute(actionID, idRepo.generateID(), alternativeID))
             .andThen(storeActionTriggeredWorker.execute(actionID))
     }
 

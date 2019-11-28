@@ -8,7 +8,7 @@ import io.reactivex.Completable
  * queueID is also used as identifier for storage.
  */
 class StoreOfflineTriggeredActionWorker(private val spHelper: SpHelper) {
-    fun put(actionID: String, queueID: String, alternativeID: String?): Completable {
+    fun execute(actionID: String, queueID: String, alternativeID: String?): Completable {
         return Completable.fromCallable {
             spHelper.storeOfflineAction(ActionUtil.createToJson(actionID, queueID, alternativeID))
         }
