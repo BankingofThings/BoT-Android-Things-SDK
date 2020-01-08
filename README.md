@@ -1,5 +1,14 @@
 # Android-Things
 
+## Supported Features
+   | Sl. No        | SDK Feature                                | Status      | Remarks |
+   | :-----------: |:-------------------------------------------| :-----------| :-------|
+   |        1      | Pairing through Bluetooth Low Energy (BLE) | :thumbsup: | Supported for both iOS and Android Mobile Applications |
+   |        2      | Pairing through QR Code                    | :thumbsup: | Supported only in Console mode for device to be paired for iOS and Android Mobile Applications|
+   |        3      | Secured HTTP with BoT Service              | :thumbsup: | Supported for all interactions with backend server |
+   |        4      | Logging                                    | :thumbsup: | Console Logging is implemented|
+   |        5      | Offline Actions                            | :thumbsup: | Helps to persist the autonomous payments on the device when there is no internet connectivity available. The saved offline actions get completed when the next action trigger happens and internet connectivity is available. This feature is in plan for implementation.|
+   
 1. Follow the steps for setting up your Raspberry PI 3 B. (Keep in mind, B+ is still not supported by Google)
 https://developer.android.com/things/hardware/raspberrypi
 
