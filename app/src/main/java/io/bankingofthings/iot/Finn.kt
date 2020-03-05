@@ -13,6 +13,7 @@ import io.bankingofthings.iot.bluetooth.BluetoothManager
 import io.bankingofthings.iot.error.*
 import io.bankingofthings.iot.interactors.*
 import io.bankingofthings.iot.model.domain.ActionModel
+import io.bankingofthings.iot.model.domain.ProductType
 import io.bankingofthings.iot.network.ApiHelper
 import io.bankingofthings.iot.network.TLSManager
 import io.bankingofthings.iot.network.pojo.BotDeviceSsidPojo
@@ -46,6 +47,7 @@ import java.util.concurrent.TimeUnit
  *
  * To start Finn, just call start() and after pairing with companion app, you can trigger actions.
 
+ * @param deviceID Device ID which can be used, when there is need for reuse of existing devices.
  * @param makerID Portal MakerID (36 characters)
  * @param hostName Manufacturer/Company name
  * @param deviceName Displayed when bluetooth device is discovered (max 8 characters)
@@ -57,6 +59,7 @@ import java.util.concurrent.TimeUnit
  */
 class Finn(
     private val context: Context,
+    private val deviceID:String?,
     private val makerID: String,
     private val hostName: String,
     private val deviceName: String,
@@ -65,6 +68,7 @@ class Finn(
     private val hasWifi: Boolean,
     private val multiPair: Boolean,
     private val aid: String? = null,
+    private val productType:ProductType,
     private val newInstall: Boolean = false
 ) {
     /**
@@ -126,7 +130,7 @@ class Finn(
     )
     private fun checkParamsValid() {
         if (makerID.length != 36) {
-            throw MakerIDInvalidError()
+            //throw MakerIDInvalidError()
         }
 
         if (hostName.isBlank()) {
@@ -158,8 +162,8 @@ class Finn(
             .apply { setCertificateInputStream(context.resources.openRawResource(R.raw.botdomain)) })
 
         keyRepo = KeyRepo(spHelper)
-        idRepo = IdRepo(spHelper, makerID)
-        deviceRepo = DeviceRepo(context, keyRepo, idRepo, hostName, deviceName, buildDate, hasWifi, multiPair, aid)
+        idRepo = IdRepo(spHelper, makerID, deviceID)
+        deviceRepo = DeviceRepo(context, keyRepo, idRepo, hostName, deviceName, buildDate, hasWifi, multiPair, aid, productType)
 
         qrBitmap = QRUtil.create(deviceRepo.deviceModel)
 

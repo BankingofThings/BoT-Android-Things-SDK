@@ -20,7 +20,7 @@ class CheckDevicePairedWorker(
     private val idRepo: IdRepo
 ) {
     fun execute(): Single<Boolean> {
-        return apiHelper.checkDeviceIsPaired(idRepo.makerID, idRepo.deviceID)
+        return apiHelper.checkDeviceIsPaired(idRepo.makerID, idRepo.deviceID!!)
             .map {
                 Jwts
                     .parser()

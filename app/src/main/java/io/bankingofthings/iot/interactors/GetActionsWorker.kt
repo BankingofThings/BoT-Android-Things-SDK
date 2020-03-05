@@ -21,7 +21,7 @@ class GetActionsWorker(private val apiHelper: ApiHelper, private val keyRepo: Ke
      * @return list of action models
      */
     fun execute(): Single<List<ActionModel>> {
-        return apiHelper.getActions(idRepo.makerID, idRepo.deviceID)
+        return apiHelper.getActions(idRepo.makerID, idRepo.deviceID!!)
             .map {
                 Jwts
                     .parser()

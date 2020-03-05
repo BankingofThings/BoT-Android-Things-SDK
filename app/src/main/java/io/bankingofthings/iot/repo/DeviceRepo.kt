@@ -10,6 +10,7 @@ import io.bankingofthings.iot.BuildConfig
 import io.bankingofthings.iot.model.domain.BotDeviceModel
 import io.bankingofthings.iot.model.domain.DeviceModel
 import io.bankingofthings.iot.model.domain.NetworkModel
+import io.bankingofthings.iot.model.domain.ProductType
 import java.nio.ByteOrder
 
 /**
@@ -24,7 +25,8 @@ class DeviceRepo(
     private val buildDate: String,
     private val hasWifi: Boolean,
     private val multiPair: Boolean,
-    private val aid: String?
+    private val aid: String?,
+    private val productType: ProductType
 ) {
     val deviceModel: DeviceModel
     val botDeviceModel: BotDeviceModel
@@ -45,11 +47,12 @@ class DeviceRepo(
     private fun createDeviceModel(): DeviceModel {
         return DeviceModel(
             idRepo.makerID,
-            idRepo.deviceID,
+            idRepo.deviceID!!,
             Base64.encodeToString(keyRepo.publicKey.encoded, Base64.NO_WRAP),
             deviceName,
             if (multiPair) 1 else 0,
-            aid
+            aid,
+            productType.value
         )
     }
 
@@ -71,7 +74,8 @@ class DeviceRepo(
             (memoryInfo.availMem).toString() + "/" + (memoryInfo.totalMem).toString(),
             networkModel.network,
             networkModel.ip,
-            hasWifi
+            hasWifi,
+            productType.value
         )
     }
 

@@ -3,17 +3,18 @@ package io.bankingofthings.iot.repo
 import io.bankingofthings.iot.storage.SpHelper
 import java.util.*
 
-class IdRepo(spHelper: SpHelper, val makerID: String) {
-    var deviceID: String
+class IdRepo(spHelper: SpHelper, val makerID: String, var deviceID: String? = null) {
 
     init {
-        if (!spHelper.getHasDeviceID()) {
-            deviceID = generateID()
+        if (deviceID == null) {
+            if (!spHelper.getHasDeviceID()) {
+                deviceID = generateID()
 
-            spHelper.storeDeviceID(deviceID)
-            spHelper.storeHasDeviceID(true)
-        } else {
-            deviceID = spHelper.getDeviceID()
+                spHelper.storeDeviceID(deviceID!!)
+                spHelper.storeHasDeviceID(true)
+            } else {
+                deviceID = spHelper.getDeviceID()
+            }
         }
     }
 

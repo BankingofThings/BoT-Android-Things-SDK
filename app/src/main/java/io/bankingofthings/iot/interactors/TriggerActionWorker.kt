@@ -36,7 +36,7 @@ class TriggerActionWorker(
             if (alternativeID != null) {
                 TriggerActionAlternativeIDParamPojo(
                     TriggerActionAlternativeIDParamPojo.Bot(
-                        idRepo.deviceID,
+                        idRepo.deviceID!!,
                         actionID,
                         alternativeID,
                         queueID
@@ -45,7 +45,7 @@ class TriggerActionWorker(
             } else {
                 TriggerActionParamPojo(
                     TriggerActionParamPojo.Bot(
-                        idRepo.deviceID,
+                        idRepo.deviceID!!,
                         actionID,
                         queueID
                     )
@@ -55,7 +55,7 @@ class TriggerActionWorker(
         )
 
         return apiHelper
-            .triggerAction(idRepo.makerID, idRepo.deviceID, token)
+            .triggerAction(idRepo.makerID, idRepo.deviceID!!, token)
             .map {
                 Jwts
                     .parser()

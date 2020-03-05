@@ -17,6 +17,7 @@ object ActionUtil {
         val lastTimeExecutedCalendar = Calendar.getInstance().apply { timeInMillis = lastTimeExecutedTime }
 
         return when (frequency) {
+            "always" -> true
             "minutely" -> lastTimeExecutedCalendar.apply { add(Calendar.MINUTE, 1) }.before(Calendar.getInstance())
             "hourly" -> lastTimeExecutedCalendar.apply { add(Calendar.HOUR, 1) }.before(Calendar.getInstance())
             "daily" -> lastTimeExecutedCalendar.apply { add(Calendar.DATE, 1) }.before(Calendar.getInstance())

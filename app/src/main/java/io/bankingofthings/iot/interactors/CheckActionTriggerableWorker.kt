@@ -22,6 +22,7 @@ class CheckActionTriggerableWorker(private val spHelper: SpHelper) {
             } else {
                 val time = spHelper.getActionLastExecutionTime(actionID)
 
+                System.out.println("CheckActionTriggerableWorker:execute time = ${time}")
                 // Time not passed
                 if (time != -1L && !ActionUtil.checkFrequencyTimePassed(time, frequency)) {
                     throw ActionFrequencyTimeNotPassedError()
