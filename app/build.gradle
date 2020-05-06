@@ -23,8 +23,8 @@ android {
         }
         debug {
             debuggable true
-            buildConfigField "String", "BOT_HOST", '"iot.bankingofthings.io"'
-            buildConfigField "String", "BASE_URL", '"https://iot.bankingofthings.io/"'
+            buildConfigField "String", "BOT_HOST", '"iot-dev.bankingofthings.io"'
+            buildConfigField "String", "BASE_URL", '"https://iot-dev.bankingofthings.io/"'
             buildConfigField "String", "BOT_FINGERPRINT", '"eOMoPZJqyIi+HMGUs0Z66iAqPXSZqW4nUuVgn7+bsCw="'
         }
     }

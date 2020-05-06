@@ -17,9 +17,7 @@ class CheckActionTriggerableWorker(private val spHelper: SpHelper) {
             val frequency = spHelper.getActionFrequency(actionID)
 
             // Frequency not found
-            if (frequency == null) {
-                throw ActionFrequencyNotFoundError()
-            } else {
+            if (frequency != null) {
                 val time = spHelper.getActionLastExecutionTime(actionID)
 
                 System.out.println("CheckActionTriggerableWorker:execute time = ${time}")

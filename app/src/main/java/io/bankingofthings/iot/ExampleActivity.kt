@@ -62,17 +62,16 @@ class ExampleActivity : Activity() {
     private fun initFinn() {
         finn = Finn(
             this,
-            "558af6c0-0e1c-46a8-8574-f1ebdb1ec994",
-            "A0831E42-4C32-4557-ABB9-15E40981E909",
+            "1909d76c-71c0-48b4-9b70-8d94aee8fca8",
+            "32BFB7D5-ECF5-48E7-9DBA-BEFD56C221B8",
             "<Host name>",
-            "Refreshing drinks",
-            "R.drinks",
-            "5-3-2020",
+            "<Device name>",
+            "blename",
+            "29-4-2020",
             false,
             false,
             "",
-            ProductType.PAYPERUSE,
-            true
+            false
         )
     }
 
@@ -85,7 +84,7 @@ class ExampleActivity : Activity() {
             .andThen(finn.getActions())
             .map { it.forEach { System.out.println("ExampleActivity:startFinnObservablePattern action: $it") } }
             .toCompletable()
-            .andThen(finn.triggerAction("248DF988-B811-418B-83BF-F55F5B46EEAB", "prodercan12345"))
+            .andThen(finn.triggerAction("7AFD572E-3C97-4C56-8D37-BFBA04965913"))
             .subscribe(
                 {
                     System.out.println("ExampleActivity:startFinnObservablePattern action triggered")

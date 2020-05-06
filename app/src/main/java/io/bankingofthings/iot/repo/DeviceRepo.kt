@@ -25,8 +25,7 @@ class DeviceRepo(
     private val buildDate: String,
     private val hasWifi: Boolean,
     private val multiPair: Boolean,
-    private val aid: String?,
-    private val productType: ProductType
+    private val aid: String?
 ) {
     val deviceModel: DeviceModel
     val botDeviceModel: BotDeviceModel
@@ -51,8 +50,7 @@ class DeviceRepo(
             Base64.encodeToString(keyRepo.publicKey.encoded, Base64.NO_WRAP),
             deviceName,
             if (multiPair) 1 else 0,
-            aid,
-            productType.value
+            aid
         )
     }
 
@@ -74,8 +72,7 @@ class DeviceRepo(
             (memoryInfo.availMem).toString() + "/" + (memoryInfo.totalMem).toString(),
             networkModel.network,
             networkModel.ip,
-            hasWifi,
-            productType.value
+            hasWifi
         )
     }
 

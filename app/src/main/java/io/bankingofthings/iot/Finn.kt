@@ -6,14 +6,10 @@ import android.content.Context.WIFI_SERVICE
 import android.graphics.Bitmap
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
-import android.os.Environment
-import com.google.android.things.bluetooth.BluetoothPairingCallback
-import com.google.gson.Gson
 import io.bankingofthings.iot.bluetooth.BluetoothManager
 import io.bankingofthings.iot.error.*
 import io.bankingofthings.iot.interactors.*
 import io.bankingofthings.iot.model.domain.ActionModel
-import io.bankingofthings.iot.model.domain.ProductType
 import io.bankingofthings.iot.network.ApiHelper
 import io.bankingofthings.iot.network.TLSManager
 import io.bankingofthings.iot.network.pojo.BotDeviceSsidPojo
@@ -23,15 +19,10 @@ import io.bankingofthings.iot.repo.KeyRepo
 import io.bankingofthings.iot.storage.SpHelper
 import io.bankingofthings.iot.utils.QRUtil
 import io.reactivex.Completable
-import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-import okhttp3.internal.Internal.instance
-import java.io.File
-import java.io.FileOutputStream
-import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
 /**
@@ -48,7 +39,7 @@ import java.util.concurrent.TimeUnit
  * To start Finn, just call start() and after pairing with companion app, you can trigger actions.
 
  * @param deviceID Device ID which can be used, when there is need for reuse of existing devices.
- * @param makerID Portal MakerID (36 characters)
+ * @param productID Portal MakerID (36 characters)
  * @param hostName Manufacturer/Company name
  * @param deviceName Displayed when bluetooth device is discovered (max 8 characters)
  * @param buildDate Date to be stored at CORE (DD-MM-YYYY)
@@ -60,7 +51,7 @@ import java.util.concurrent.TimeUnit
 class Finn(
     private val context: Context,
     private val deviceID:String?,
-    private val makerID: String,
+    private val productID: String,
     private val hostName: String,
     private val deviceName: String,
     private val blueToothName: String,
@@ -68,7 +59,6 @@ class Finn(
     private val hasWifi: Boolean,
     private val multiPair: Boolean,
     private val aid: String? = null,
-    private val productType:ProductType,
     private val newInstall: Boolean = false
 ) {
     /**
@@ -129,7 +119,7 @@ class Finn(
         AlternativeIdentifierDisplayNameEmptyError::class
     )
     private fun checkParamsValid() {
-        if (makerID.length != 36) {
+        if (productID.length != 36) {
             //throw MakerIDInvalidError()
         }
 
@@ -162,8 +152,8 @@ class Finn(
             .apply { setCertificateInputStream(context.resources.openRawResource(R.raw.botdomain)) })
 
         keyRepo = KeyRepo(spHelper)
-        idRepo = IdRepo(spHelper, makerID, deviceID)
-        deviceRepo = DeviceRepo(context, keyRepo, idRepo, hostName, deviceName, buildDate, hasWifi, multiPair, aid, productType)
+        idRepo = IdRepo(spHelper, productID, deviceID)
+        deviceRepo = DeviceRepo(context, keyRepo, idRepo, hostName, deviceName, buildDate, hasWifi, multiPair, aid)
 
         qrBitmap = QRUtil.create(deviceRepo.deviceModel)
 

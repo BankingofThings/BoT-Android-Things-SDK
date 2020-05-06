@@ -16,6 +16,8 @@ class IdRepo(spHelper: SpHelper, val makerID: String, var deviceID: String? = nu
                 deviceID = spHelper.getDeviceID()
             }
         }
+
+        println("IdRepo.init deviceID:" + deviceID)
     }
 
     /**
