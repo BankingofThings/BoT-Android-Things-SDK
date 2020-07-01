@@ -62,16 +62,16 @@ class ExampleActivity : Activity() {
     private fun initFinn() {
         finn = Finn(
             this,
-            "1909d76c-71c0-48b4-9b70-8d94aee8fca8",
-            "32BFB7D5-ECF5-48E7-9DBA-BEFD56C221B8",
+            "fe54e5b2-6f26-4eca-b1fe-91e3f2cc77c0",
+            "D49B5D33-348B-470F-89A4-265313D166CE",
             "<Host name>",
-            "<Device name>",
+            "loki-rpi-z",
             "blename",
             "29-4-2020",
             false,
-            false,
-            "",
-            false
+            true,
+            "svmld",
+            true
         )
     }
 
