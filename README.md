@@ -53,7 +53,7 @@ The BotTalk mechanisme enables two way communication between IoT and FINN backen
 
 For example when an action with type of PayPerUse is configured. When the client activates the action in the app, the backend notifies the BotTalk mechanisme with a **message** and immediatly inactivates the action. So the client can active the action again.
 
-The **message** contains:
+- The **message** contains:
     - actionID: generated when an action is created on Portal
     - customerID: clients unique id per app profile
     
