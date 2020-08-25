@@ -19,6 +19,7 @@ import io.bankingofthings.iot.repo.IdRepo
 import io.bankingofthings.iot.repo.KeyRepo
 import io.bankingofthings.iot.repo.QrRepo
 import io.bankingofthings.iot.storage.SpHelper
+import io.bankingofthings.iot.utils.QRUtil
 import io.reactivex.Completable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -159,7 +160,6 @@ class Finn(
         idRepo = IdRepo(spHelper, productID, deviceID)
         deviceRepo = DeviceRepo(context, keyRepo, idRepo, hostName, deviceName, buildDate, hasWifi, multiPair, aid)
 
-        qrBitmap = QRUtil.create(deviceRepo.deviceModel)
         qrRepo = QrRepo(spHelper, deviceRepo)
 
         checkDevicePairedWorker = CheckDevicePairedWorker(apiHelper, keyRepo, idRepo)

@@ -3,31 +3,12 @@ package io.bankingofthings.iot.utils
 import android.graphics.Bitmap
 import android.graphics.Color
 import com.google.gson.Gson
-import android.os.Environment
-import com.google.gson.Gson
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
 import io.bankingofthings.iot.model.domain.DeviceModel
-import io.bankingofthings.iot.model.domain.DeviceModel
-import java.io.File
-import java.io.FileOutputStream
 
 object QRUtil {
-    fun create(deviceModel: DeviceModel): Bitmap {
-        val qrBitmap = encodeAsBitmap(Gson().toJson(deviceModel))
-
-        val sdCard = Environment.getExternalStorageDirectory()
-        val file = File(sdCard, "qr_${deviceModel.deviceID}.jpg")
-        val fileOutputStream = FileOutputStream(file)
-
-        qrBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
-
-        fileOutputStream.flush()
-        fileOutputStream.close()
-
-        return qrBitmap
-    }
 
     /**
      * Creates qr code, stores it as jpg on sdcard and returns bitmap.

@@ -8,3 +8,4 @@ app/.externalNativeBuild
 .idea
 local.properties
 /app/.externalNativeBuild/
+/app/.cxx/
