@@ -46,3 +46,15 @@ If you have multi pair on, add (replace null) the alternative ID (the same ID en
 
 ### See documents folder for the diagrams.
 Class diagram - https://github.com/BankingofThings/BoT-Android-Things-SDK/blob/master/documents/classdiagram.png
+
+
+# BotTalk
+The BotTalk mechanisme enables two way communication between IoT and FINN backend (polling mechanism).
+
+For example when an action with type of PayPerUse is configured. When the client activates the action in the app, the backend notifies the BotTalk mechanisme with a **message** and immediatly inactivates the action. So the client can active the action again.
+
+The **message** contains:
+    - actionID: generated when an action is created on Portal
+    - customerID: clients unique id per app profile
+    
+The IoT SDK polls this message every 10 seconds (can be changed) and dispatches the listener. Which can be set with Finn.setBotTalkListener(BotTalkListener). The message can be handled by triggering the action( with Finn.triggerBotTalkAction(actionID:String, customerID:String)). For example the IoT devices needs to activate some actuators or sensors if everything is done, it can notify FINN backend with the triggerAction so the client is notified.
