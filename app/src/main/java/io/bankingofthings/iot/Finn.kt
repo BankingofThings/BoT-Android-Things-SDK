@@ -19,13 +19,14 @@ import io.bankingofthings.iot.repo.IdRepo
 import io.bankingofthings.iot.repo.KeyRepo
 import io.bankingofthings.iot.repo.QrRepo
 import io.bankingofthings.iot.storage.SpHelper
-import io.bankingofthings.iot.utils.QRUtil
 import io.reactivex.Completable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.rxkotlin.addTo
 import io.reactivex.schedulers.Schedulers
 import retrofit2.adapter.rxjava2.HttpException
+import java.util.NoSuchElementException
 import java.util.concurrent.TimeUnit
 
 /**
@@ -53,7 +54,7 @@ import java.util.concurrent.TimeUnit
  */
 class Finn(
     private val context: Context,
-    private val deviceID:String?,
+    private val deviceID: String?,
     private val productID: String,
     private val hostName: String,
     private val deviceName: String,
@@ -112,10 +113,11 @@ class Finn(
     private val storeActionTriggeredWorker: StoreActionTriggeredWorker
     private val storeOfflineTriggeredActionWorker: StoreOfflineTriggeredActionWorker
     private val checkAndExecuteOfflineActionsWorker: CheckAndExecuteOfflineActionsWorker
+    private val getMessagesWorker: GetMessagesWorker
 
     private val bluetoothManager: BluetoothManager
 
-    var isPaired:Boolean = false
+    var isPaired: Boolean = false
 
     @Throws(
         MakerIDInvalidError::class,
@@ -158,7 +160,17 @@ class Finn(
 
         keyRepo = KeyRepo(spHelper)
         idRepo = IdRepo(spHelper, productID, deviceID)
-        deviceRepo = DeviceRepo(context, keyRepo, idRepo, hostName, deviceName, buildDate, hasWifi, multiPair, aid)
+        deviceRepo = DeviceRepo(
+            context,
+            keyRepo,
+            idRepo,
+            hostName,
+            deviceName,
+            buildDate,
+            hasWifi,
+            multiPair,
+            aid
+        )
 
         qrRepo = QrRepo(spHelper, deviceRepo)
 
@@ -170,7 +182,9 @@ class Finn(
         triggerActionWorker = TriggerActionWorker(apiHelper, keyRepo, idRepo)
         storeActionTriggeredWorker = StoreActionTriggeredWorker(spHelper)
         storeOfflineTriggeredActionWorker = StoreOfflineTriggeredActionWorker(spHelper)
-        checkAndExecuteOfflineActionsWorker = CheckAndExecuteOfflineActionsWorker(spHelper, triggerActionWorker)
+        checkAndExecuteOfflineActionsWorker =
+            CheckAndExecuteOfflineActionsWorker(spHelper, triggerActionWorker)
+        getMessagesWorker = GetMessagesWorker(apiHelper, keyRepo, idRepo)
 
         bluetoothManager = BluetoothManager(
             context,
@@ -275,6 +289,8 @@ class Finn(
                 }
 
                 isPaired = true
+
+                startBotTalk()
             }
             .retryWhen { it.delay(10, TimeUnit.SECONDS) }
             .subscribeOn(Schedulers.io())
@@ -288,6 +304,8 @@ class Finn(
      * Clears bitmap cache
      */
     fun stop() {
+        startBotTalkDisposables.clear()
+
         networkManager.stop()
         disposables.dispose()
         bluetoothManager.kill()
@@ -324,16 +342,22 @@ class Finn(
         ActionTriggerFailedAlternativeIdRequired::class,
         ActionNotActivatedError::class
     )
-    fun triggerAction(actionID: String, alternativeID: String? = null): Completable {
+    fun triggerAction(
+        actionID: String,
+        alternativeID: String? = null,
+        value: String? = null
+    ): Completable {
         if (multiPair && alternativeID == null) {
             throw ActionTriggerFailedAlternativeIdRequired()
         } else {
 
             return if (networkManager.hasNetworkConnection()) {
-                createCompositeSendAction(actionID, alternativeID)
+                createCompositeSendAction(actionID, alternativeID, value)
                     .onErrorResumeNext {
                         when {
-                            it is HttpException && it.code() == 400 -> Completable.error(ActionNotActivatedError())
+                            it is HttpException && it.code() == 400 -> Completable.error(
+                                ActionNotActivatedError()
+                            )
                             else -> Completable.error(it)
                         }
                     }
@@ -377,20 +401,88 @@ class Finn(
         }
     }
 
-    private fun createCompositeSendAction(actionID: String, alternativeID: String?): Completable {
+    private fun createCompositeSendAction(
+        actionID: String,
+        alternativeID: String?,
+        value: String? = null
+    ): Completable {
         return checkActionTriggerableWorker.execute(actionID)
-            .andThen(triggerActionWorker.execute(actionID, idRepo.generateID(), alternativeID))
+            .andThen(
+                triggerActionWorker.execute(
+                    actionID,
+                    value ?: idRepo.generateID(),
+                    alternativeID
+                )
+            )
             .andThen(storeActionTriggeredWorker.execute(actionID))
             .andThen(checkAndExecuteOfflineActionsWorker.execute())
     }
 
-    private fun createCompositeTriggerOfflineAction(actionID: String, alternativeID: String?): Completable {
+    private fun createCompositeTriggerOfflineAction(
+        actionID: String,
+        alternativeID: String?
+    ): Completable {
         return checkActionTriggerableWorker.execute(actionID)
-            .andThen(storeOfflineTriggeredActionWorker.execute(actionID, idRepo.generateID(), alternativeID))
+            .andThen(
+                storeOfflineTriggeredActionWorker.execute(
+                    actionID,
+                    idRepo.generateID(),
+                    alternativeID
+                )
+            )
             .andThen(storeActionTriggeredWorker.execute(actionID))
     }
 
     fun getQrBitmap(): Bitmap {
         return qrRepo.qrBitmap
+    }
+
+
+    interface BotTalkListener {
+        fun onActionActivatedByClient(actionID: String, customerID: String)
+    }
+
+    private var botTalkListener: BotTalkListener? = null
+
+    /**
+     * To remove, set null
+     */
+    fun setBotTalkListener(listener: BotTalkListener?) {
+        this.botTalkListener = listener
+    }
+
+    fun triggerBotTalkAction(actionID: String, customerID: String) =
+        triggerAction(actionID, customerID, "")
+
+    private val startBotTalkDisposables = CompositeDisposable()
+    private fun startBotTalk() {
+        startBotTalkDisposables.clear()
+
+        Single.timer(10, TimeUnit.SECONDS, AndroidSchedulers.mainThread())
+            .ignoreElement()
+            .andThen(getMessagesWorker.execute())
+            .toFlowable()
+            .flatMapIterable { it }
+            .flatMapCompletable {
+                it.payloadModel?.actionID?.let { actionID ->
+                    it.payloadModel?.customerID?.let { customerID ->
+                        botTalkListener?.onActionActivatedByClient(
+                            actionID,
+                            customerID
+                        )
+
+                        Completable.complete()
+                    }
+                }
+            }
+            .subscribe(this::startBotTalk) {
+                when (it) {
+                    is NoSuchElementException -> println("Finn.startBotTalk no messages")
+                    else -> it.printStackTrace()
+                }
+
+                startBotTalk()
+            }
+            .addTo(startBotTalkDisposables)
     }
 }

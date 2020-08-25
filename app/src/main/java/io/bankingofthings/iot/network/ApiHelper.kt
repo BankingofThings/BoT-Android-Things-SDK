@@ -5,7 +5,9 @@ import io.bankingofthings.iot.BuildConfig
 import io.bankingofthings.iot.network.pojo.TokenParamPojo
 import io.bankingofthings.iot.network.service.CoreApi
 import io.reactivex.Single
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.Response
 import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -45,16 +47,18 @@ class ApiHelper(private val tlsManager: TLSManager) {
                     this.level = HttpLoggingInterceptor.Level.BODY
                 }
             )
-            .addInterceptor {
-                it.proceed(
-                    it.request()
-                        .newBuilder()
-                        .addHeader("accept", "application/json; charset=utf-8")
-                        .addHeader("content-type", "application/json; charset=utf-8")
-                        .addHeader("cache-control", "no-cache")
-                        .build()
-                )
-            }
+            .addInterceptor(object : Interceptor {
+                override fun intercept(chain: Interceptor.Chain): Response {
+                    return chain.proceed(
+                        chain.request()
+                            .newBuilder()
+                            .addHeader("accept", "application/json; charset=utf-8")
+                            .addHeader("content-type", "application/json; charset=utf-8")
+                            .addHeader("cache-control", "no-cache")
+                            .build()
+                    )
+                }
+            })
             .build()
     }
 
@@ -79,5 +83,9 @@ class ApiHelper(private val tlsManager: TLSManager) {
 
     fun triggerAction(makerID: String, deviceID: String, token: String): Single<ResponseBody> {
         return coreApi.postActions(makerID, deviceID, TokenParamPojo(token))
+    }
+
+    fun getMessages(makerID: String, deviceID: String): Single<ResponseBody> {
+        return coreApi.getMessages(makerID, deviceID)
     }
 }

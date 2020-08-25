@@ -38,11 +38,12 @@ class ActivateDeviceWorker(private val apiHelper: ApiHelper, private val keyRepo
             }
             .map { it.get("bot", String::class.java) }
             .flatMapCompletable {
-                if (it.isEmpty()) {
                     Completable.complete()
-                } else {
-                    Completable.error(DeviceActivationFailedError())
-                }
+                // Is not returning empty anymore 25-8-2020
+//                if (it.isEmpty()) {
+//                } else {
+//                    Completable.error(DeviceActivationFailedError())
+//                }
             }
     }
 }

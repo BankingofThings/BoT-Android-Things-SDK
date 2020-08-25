@@ -23,8 +23,8 @@ android {
         }
         debug {
             debuggable true
-            buildConfigField "String", "BOT_HOST", '"iot-dev.bankingofthings.io"'
-            buildConfigField "String", "BASE_URL", '"https://iot-dev.bankingofthings.io/"'
+            buildConfigField "String", "BOT_HOST", '"iot.bankingofthings.io"'
+            buildConfigField "String", "BASE_URL", '"https://iot.bankingofthings.io/"'
             buildConfigField "String", "BOT_FINGERPRINT", '"eOMoPZJqyIi+HMGUs0Z66iAqPXSZqW4nUuVgn7+bsCw="'
         }
     }
@@ -52,27 +52,27 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     testImplementation 'junit:junit:4.12'
 
-    compileOnly 'com.google.android.things:androidthings:+'
+    compileOnly 'com.google.android.things:androidthings:1.0'
     implementation 'com.google.android.things.contrib:driver-pwmservo:1.0'
     implementation 'com.google.android.things.contrib:driver-button:1.0'
 
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.72"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.4.0"
     implementation 'com.android.support:multidex:1.0.3'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    implementation 'com.android.support.constraint:constraint-layout:2.0.0'
     // Generating QR
     implementation 'com.google.zxing:core:3.3.0'
     // Rx
-    implementation 'io.reactivex.rxjava2:rxkotlin:2.2.0'
-    implementation 'io.reactivex.rxjava2:rxandroid:2.0.2'
+    implementation 'io.reactivex.rxjava2:rxkotlin:2.4.0'
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
     // Retrofit
-    implementation 'com.squareup.retrofit2:retrofit:2.4.0'
-    implementation 'com.squareup.retrofit2:retrofit-converters:2.4.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.6.1'
+    implementation 'com.squareup.retrofit2:retrofit-converters:2.6.1'
     implementation 'com.squareup.retrofit2:retrofit-adapters:2.4.0'
     implementation 'com.squareup.retrofit2:adapter-rxjava2:2.4.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
-    implementation 'com.squareup.okhttp3:logging-interceptor:3.10.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.6.1'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.2.2'
 
     // JWT
     api 'io.jsonwebtoken:jjwt-api:0.10.5'

@@ -8,6 +8,8 @@ import io.bankingofthings.iot.model.domain.ActionModel
 import io.bankingofthings.iot.model.domain.ProductType
 import io.reactivex.Completable
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
+import io.reactivex.rxkotlin.addTo
 import java.util.concurrent.TimeUnit
 
 
@@ -19,6 +21,7 @@ import java.util.concurrent.TimeUnit
 class ExampleActivity : Activity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var finn: Finn
+
     // Used with observables
     private val disposables: CompositeDisposable = CompositeDisposable()
 
@@ -43,29 +46,43 @@ class ExampleActivity : Activity() {
     private fun initFinn() {
         finn = Finn(
             this,
-            "fe54e5b2-6f26-4eca-b1fe-91e3f2cc77c0",
-            "D49B5D33-348B-470F-89A4-265313D166CE",
+            null,
+            "<ProductID>",
             "<Host name>",
-            "loki-rpi-z",
+            "",
             "blename",
-            "29-4-2020",
+            "25-8-2020",
             false,
-            true,
-            "svmld",
-            true
+            false,
+            "aid",
+            false
         )
     }
+
+    private var triggerBotTalkActionDisposable: Disposable? = null
 
     /**
      * Starts FINN.
      * With observable style of coding
      */
     private fun startFinnObservablePattern() {
+        finn.setBotTalkListener(object : Finn.BotTalkListener {
+            override fun onActionActivatedByClient(actionID: String, customerID: String) {
+                // do some pre trigger actions here
+                finn.triggerBotTalkAction(actionID, customerID)
+                    .subscribe(
+                        {
+                            // do some post trigger actions here
+                        }, Throwable::printStackTrace
+                    )
+                    .apply { triggerBotTalkActionDisposable = this }
+            }
+        })
+
         finn.start()
             .andThen(finn.getActions())
             .map { it.forEach { System.out.println("ExampleActivity:startFinnObservablePattern action: $it") } }
-            .toCompletable()
-            .andThen(finn.triggerAction("7AFD572E-3C97-4C56-8D37-BFBA04965913"))
+            .ignoreElement()
             .subscribe(
                 {
                     System.out.println("ExampleActivity:startFinnObservablePattern action triggered")

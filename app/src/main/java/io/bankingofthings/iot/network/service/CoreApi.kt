@@ -50,4 +50,14 @@ interface CoreApi {
         @Header("deviceID") deviceID: String,
         @Body pojo: TokenParamPojo
     ): Single<ResponseBody>
+
+
+    /**
+     * Returns the list of actions, which is create by the maker in portal
+     */
+    @GET("messages")
+    fun getMessages(
+        @Header("makerID") makerID: String,
+        @Header("deviceID") deviceID: String
+    ): Single<ResponseBody>
 }
