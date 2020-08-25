@@ -1,7 +1,10 @@
 .DS_Store
 app/build
 app/.externalNativeBuild
+/app/build
 /.gradle
+.DS_Store
 /.scannerWork
 .idea
 local.properties
+/app/.externalNativeBuild/

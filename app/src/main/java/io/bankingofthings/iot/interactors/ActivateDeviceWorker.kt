@@ -24,11 +24,11 @@ class ActivateDeviceWorker(private val apiHelper: ApiHelper, private val keyRepo
     fun execute(): Completable {
         val token =
             JWTUtil.create(
-                ActivateDeviceParamPojo(ActivateDeviceParamPojo.Bot(idRepo.deviceID)) as Any,
+                ActivateDeviceParamPojo(ActivateDeviceParamPojo.Bot(idRepo.deviceID!!)) as Any,
                 keyRepo.privateKey
             )
 
-        return apiHelper.activateDevice(idRepo.makerID, idRepo.deviceID, token)
+        return apiHelper.activateDevice(idRepo.makerID, idRepo.deviceID!!, token)
             .map {
                 Jwts
                     .parser()

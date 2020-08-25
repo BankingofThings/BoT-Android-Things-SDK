@@ -10,6 +10,7 @@ import io.bankingofthings.iot.BuildConfig
 import io.bankingofthings.iot.model.domain.BotDeviceModel
 import io.bankingofthings.iot.model.domain.DeviceModel
 import io.bankingofthings.iot.model.domain.NetworkModel
+import io.bankingofthings.iot.model.domain.ProductType
 import java.nio.ByteOrder
 
 /**
@@ -45,7 +46,7 @@ class DeviceRepo(
     private fun createDeviceModel(): DeviceModel {
         return DeviceModel(
             idRepo.makerID,
-            idRepo.deviceID,
+            idRepo.deviceID!!,
             Base64.encodeToString(keyRepo.publicKey.encoded, Base64.NO_WRAP),
             deviceName,
             if (multiPair) 1 else 0,

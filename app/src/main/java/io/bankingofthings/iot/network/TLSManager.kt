@@ -51,7 +51,7 @@ class TLSManager {
         return CertificatePinner
             .Builder()
             .add(
-                "*" + BuildConfig.BOT_HOST,
+                BuildConfig.BOT_HOST,
                 "sha256/" + BuildConfig.BOT_FINGERPRINT
             )
             .build()

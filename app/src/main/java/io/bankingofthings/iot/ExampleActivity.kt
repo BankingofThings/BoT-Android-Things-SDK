@@ -5,7 +5,10 @@ import android.databinding.DataBindingUtil
 import android.os.Bundle
 import io.bankingofthings.iot.databinding.ActivityMainBinding
 import io.bankingofthings.iot.model.domain.ActionModel
+import io.bankingofthings.iot.model.domain.ProductType
+import io.reactivex.Completable
 import io.reactivex.disposables.CompositeDisposable
+import java.util.concurrent.TimeUnit
 
 
 /**
@@ -40,15 +43,16 @@ class ExampleActivity : Activity() {
     private fun initFinn() {
         finn = Finn(
             this,
-            "<Your maker ID>",
+            "fe54e5b2-6f26-4eca-b1fe-91e3f2cc77c0",
+            "D49B5D33-348B-470F-89A4-265313D166CE",
             "<Host name>",
-            "<Device Name>",
-            "<Bluetooth Name (display name)>",
-            "<Date of build>",
-            true,
+            "loki-rpi-z",
+            "blename",
+            "29-4-2020",
             false,
-            "<Multi pair display name>",
-            false
+            true,
+            "svmld",
+            true
         )
     }
 
@@ -61,7 +65,7 @@ class ExampleActivity : Activity() {
             .andThen(finn.getActions())
             .map { it.forEach { System.out.println("ExampleActivity:startFinnObservablePattern action: $it") } }
             .toCompletable()
-            .andThen(finn.triggerAction("<Your action ID>"))
+            .andThen(finn.triggerAction("7AFD572E-3C97-4C56-8D37-BFBA04965913"))
             .subscribe(
                 {
                     System.out.println("ExampleActivity:startFinnObservablePattern action triggered")

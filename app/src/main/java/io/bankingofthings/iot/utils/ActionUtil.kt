@@ -21,45 +21,13 @@ object ActionUtil {
 
         return when (frequency) {
             "always" -> true
-            "minutely" -> lastTimeExecutedCalendar.apply {
-                add(
-                    Calendar.MINUTE,
-                    1
-                )
-            }.before(Calendar.getInstance())
-            "hourly" -> lastTimeExecutedCalendar.apply {
-                add(
-                    Calendar.HOUR,
-                    1
-                )
-            }.before(Calendar.getInstance())
-            "daily" -> lastTimeExecutedCalendar.apply {
-                add(
-                    Calendar.DATE,
-                    1
-                )
-            }.before(Calendar.getInstance())
-            "weekly" -> lastTimeExecutedCalendar.apply {
-                add(
-                    Calendar.YEAR,
-                    1
-                )
-            }.before(Calendar.getInstance())
-            "monthly" -> lastTimeExecutedCalendar.apply {
-                add(
-                    Calendar.MONTH,
-                    1
-                )
-            }.before(Calendar.getInstance())
-            "half_yearly" -> lastTimeExecutedCalendar.apply { add(Calendar.MONTH, 6) }.before(
-                Calendar.getInstance()
-            )
-            "yearly" -> lastTimeExecutedCalendar.apply {
-                add(
-                    Calendar.YEAR,
-                    1
-                )
-            }.before(Calendar.getInstance())
+            "minutely" -> lastTimeExecutedCalendar.apply { add(Calendar.MINUTE, 1) }.before(Calendar.getInstance())
+            "hourly" -> lastTimeExecutedCalendar.apply { add(Calendar.HOUR, 1) }.before(Calendar.getInstance())
+            "daily" -> lastTimeExecutedCalendar.apply { add(Calendar.DATE, 1) }.before(Calendar.getInstance())
+            "weekly" -> lastTimeExecutedCalendar.apply { add(Calendar.YEAR, 1) }.before(Calendar.getInstance())
+            "monthly" -> lastTimeExecutedCalendar.apply { add(Calendar.MONTH, 1) }.before(Calendar.getInstance())
+            "half_yearly" -> lastTimeExecutedCalendar.apply { add(Calendar.MONTH, 6) }.before(Calendar.getInstance())
+            "yearly" -> lastTimeExecutedCalendar.apply { add(Calendar.YEAR, 1) }.before(Calendar.getInstance())
             else -> false
         }
     }

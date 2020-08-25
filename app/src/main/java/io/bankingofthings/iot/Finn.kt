@@ -40,7 +40,8 @@ import java.util.concurrent.TimeUnit
  *
  * To start Finn, just call start() and after pairing with companion app, you can trigger actions.
 
- * @param makerID Portal MakerID (36 characters)
+ * @param deviceID Device ID which can be used, when there is need for reuse of existing devices.
+ * @param productID Portal MakerID (36 characters)
  * @param hostName Manufacturer/Company name
  * @param deviceName Displayed when bluetooth device is discovered (max 8 characters)
  * @param buildDate Date to be stored at CORE (DD-MM-YYYY)
@@ -51,7 +52,8 @@ import java.util.concurrent.TimeUnit
  */
 class Finn(
     private val context: Context,
-    private val makerID: String,
+    private val deviceID:String?,
+    private val productID: String,
     private val hostName: String,
     private val deviceName: String,
     private val blueToothName: String,
@@ -121,8 +123,8 @@ class Finn(
         AlternativeIdentifierDisplayNameEmptyError::class
     )
     private fun checkParamsValid() {
-        if (makerID.length != 36) {
-            throw MakerIDInvalidError()
+        if (productID.length != 36) {
+            //throw MakerIDInvalidError()
         }
 
         if (hostName.isBlank()) {
@@ -154,19 +156,10 @@ class Finn(
             .apply { setCertificateInputStream(context.resources.openRawResource(R.raw.botdomain)) })
 
         keyRepo = KeyRepo(spHelper)
-        idRepo = IdRepo(spHelper, makerID)
-        deviceRepo = DeviceRepo(
-            context,
-            keyRepo,
-            idRepo,
-            hostName,
-            deviceName,
-            buildDate,
-            hasWifi,
-            multiPair,
-            aid
-        )
+        idRepo = IdRepo(spHelper, productID, deviceID)
+        deviceRepo = DeviceRepo(context, keyRepo, idRepo, hostName, deviceName, buildDate, hasWifi, multiPair, aid)
 
+        qrBitmap = QRUtil.create(deviceRepo.deviceModel)
         qrRepo = QrRepo(spHelper, deviceRepo)
 
         checkDevicePairedWorker = CheckDevicePairedWorker(apiHelper, keyRepo, idRepo)
